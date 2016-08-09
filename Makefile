@@ -5,7 +5,7 @@ CSERVICE_PATH ?= cservice
 
 SKYNET_BUILD_PATH ?= .
 
-CFLAGS = -g -O2 -Wall -I$(LUA_INC) $(MYCFLAGS)
+CFLAGS = -g -Wall -I$(LUA_INC) $(MYCFLAGS)
 # CFLAGS += -DUSE_PTHREAD_LOCK
 
 # lua
@@ -16,6 +16,14 @@ LUA_INC ?= 3rd/lua
 
 $(LUA_STATICLIB) :
 	cd 3rd/lua && $(MAKE) CC='$(CC) -std=gnu99' $(PLAT)
+
+# pbc
+PBC_BUILD := 3rd/pbc/build
+PBC_STATICLIB := 3rd/pbc/build/libpbc.a
+PBC_INC := 3rd/pbc/
+
+$(PBC_STATICLIB) :
+	cd 3rd/pbc && $(MAKE) CC=$(CC)
 
 # jemalloc 
 
@@ -44,11 +52,11 @@ update3rd :
 
 # skynet
 
-CSERVICE = snlua logger gate harbor
+CSERVICE = snlua logger gate harbor client connector
 LUA_CLIB = skynet socketdriver bson mongo md5 netpack \
   clientsocket memory profile multicast \
   cluster crypt sharedata stm sproto lpeg \
-  mysqlaux debugchannel
+  mysqlaux debugchannel protobuf util cjson
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -128,10 +136,20 @@ $(LUA_CLIB_PATH)/mysqlaux.so : lualib-src/lua-mysqlaux.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@	
 
 $(LUA_CLIB_PATH)/debugchannel.so : lualib-src/lua-debugchannel.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@	
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
+
+$(LUA_CLIB_PATH)/protobuf.so : 3rd/pbc/binding/lua/pbc-lua.c $(PBC_STATICLIB) | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/pbc $^ -o $@
+
+$(LUA_CLIB_PATH)/util.so : server/clib/lua-util.c
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
+
+$(LUA_CLIB_PATH)/cjson.so : 3rd/lua-cjson/lua_cjson.c 3rd/lua-cjson/strbuf.c 3rd/lua-cjson/fpconv.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-cjson $^ -o $@ 
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
+	rm -rf $(PBC_BUILD)
 
 cleanall: clean
 ifneq (,$(wildcard 3rd/jemalloc/Makefile))

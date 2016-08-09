@@ -142,15 +142,13 @@ function gateserver.start(handler)
 		end
 	}
 
-	skynet.start(function()
-		skynet.dispatch("lua", function (_, address, cmd, ...)
-			local f = CMD[cmd]
-			if f then
-				skynet.ret(skynet.pack(f(address, ...)))
-			else
-				skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
-			end
-		end)
+	skynet.dispatch("lua", function (_, address, cmd, ...)
+		local f = CMD[cmd]
+		if f then
+			skynet.ret(skynet.pack(f(address, ...)))
+		else
+			skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
+		end
 	end)
 end
 
