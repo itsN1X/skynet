@@ -1,6 +1,5 @@
 local fish = require "fish"
 local queue = require "skynet.queue"
-local util = require "util"
 local login_serv = require_script "login.login_serv"
 
 local function start(...)

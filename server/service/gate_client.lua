@@ -1,6 +1,5 @@
 local fish = require "fish"
 local gate = require "gate"
-local util = require "util"
 
 
 local login,port,maxclient = ...
@@ -31,20 +30,20 @@ fish.register_message("message",function (surce,fd,msg,sz)
 end)
 
 fish.register_message("connect",function (surce,fd,addr)
-	print("connect",fd,addr)
+	fish.error("connect",fd,addr)
 	gate.openclient(fd)
 	fish.send(_login,"enter",{fd = fd,addr = addr})
-	_fd_mgr[fd] = {addr = addr,index = 0,key = util.rc4_box("legend")}
+	_fd_mgr[fd] = {addr = addr,counter = 0,key = util.rc4_box("legend")}
 end)
 
 fish.register_message("disconnect",function (surce,fd)
-	print("disconnect",fd)
+	fish.error("disconnect",fd)
 	fish.send(_login,"leave",{fd = fd})
 	_fd_mgr[fd] = nil
 end)
 
 fish.register_message("error",function (surce,fd,msg)
-	print("error",fd,msg)
+	fish.error("error",fd,msg)
 	fish.send(_login,"leave",{fd = fd})
 	_fd_mgr[fd] = nil
 end)

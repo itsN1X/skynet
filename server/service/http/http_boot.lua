@@ -14,6 +14,5 @@ fish.start(start,stop)
 
 fish.register_message("test",function (source,args)
 	print(args.a,args.b)
-	fish.dump_handle()
 	return {name = "mrq"}
 end)

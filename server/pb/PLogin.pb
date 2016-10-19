@@ -1,15 +1,25 @@
 
-æ
+è
 csproto/PLogin.protoSoulProtocolcsproto/P_Common.proto"
 ExchangeKeyMsg
-key ("h
+key ("é
 AuthReq
 token (	
 network (	
 device (	
 uuid (	
 system (	
-entryId (	"ó
+entryId (	
+
+deviceType (	
+imei (	
+	androidId	 (	
+advertisingId
+ (	
+idfa (	
+	osVersion (	
+
+phoneModel (	"ó
 AuthMsg0
 rolelist (2.SoulProtocol.AuthMsg.RoleListµ
 RoleList

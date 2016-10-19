@@ -4,7 +4,8 @@ local codecache = require "skynet.codecache"
 
 local fish = {
 	PTYPE_FISH = 100,
-	PTYPE_GATE = 101
+	PTYPE_GATE = 101,
+	PTYPE_AGENT = 102,
 }
 
 skynet.register_protocol {
@@ -21,15 +22,31 @@ skynet.register_protocol {
 	unpack = skynet.unpack,
 }
 
+skynet.register_protocol {
+	name = "agent",
+	id = fish.PTYPE_AGENT,
+	pack = skynet.pack,
+	unpack = skynet.unpack,
+}
+
+skynet.register_protocol {
+	name = "client",
+	id = skynet.PTYPE_CLIENT,
+	pack = function(...) return ... end,
+}
+
 
 local system = {}
 
 local _init_func
 local _stop_func
+local _reload_func
 local _route = {}
 local _alive = false
 local _script_mgr = {}
 local _handle_mgr = {}
+local _request_proto_file
+local _reponse_proto_file
 
 
 function system.init(source,...)
@@ -76,8 +93,13 @@ function system.reload(source,list)
 	end
 end
 
-function fish.require(path)
-	local module = require(path)
+function fish.require(file)
+	local scirpt_info = _script_mgr[file]
+	if scirpt_info ~= nil then
+		return scirpt_info.proxy
+	end
+
+	local module = require(file)
 
 	local result = setmetatable({},{__index = function (self,method)
 		local func = module[method]
@@ -85,28 +107,39 @@ function fish.require(path)
 		return func
 	end})
 	
-	_script_mgr[path] = {proxy = result,module = module}	
+	_script_mgr[file] = {proxy = result,module = module}
+
+	fish.send(".script_manager","report",skynet.self(),file)	
 	return result
 end
 
-function fish.new_service(name,file,...)
-	local handle = fish.call(".service_helper","new_service",name,file,...)
+function fish.newservice(name,file,...)
+	local handle = fish.call(".service_helper","newservice",name,file,...)
 	return handle
 end
 
-function fish.init_service(handle,...)
-	local r = fish.call(".service_helper","init_service",handle,...)
+function fish.initservice(handle,...)
+	local r = fish.call(".service_helper","initservice",handle,...)
 	return r
 end
 
-function fish.stop_service(handle,...)
-	local r = fish.call(".service_helper","stop_service",handle,...)
+function fish.stopservice(handle,...)
+	local r = fish.call(".service_helper","stopservice",handle,...)
 	return r
+end
+
+function fish.init_service(handle,...)
+	return skynet.call(handle,"fish","init",...)
+end
+
+function fish.stop_service(handle,...)
+	return skynet.call(handle,"fish","stop",...)
 end
 
 function fish.reload_service(handle,...)
 	return skynet.call(handle,"fish","reload",...)
 end
+
 
 function fish.set_handle(handle,list)
 	skynet.send(handle,"fish","set_handle",list)
@@ -123,12 +156,17 @@ function fish.dump_handle()
 end
 
 fish.self = skynet.self
-fish.time = skynet.time
 fish.now = skynet.now
 fish.dispatch = skynet.dispatch
-fish.error = skynet.error
+-- fish.error = skynet.error
 fish.name = skynet.name
 fish.register = skynet.register
+fish.localname = skynet.localname
+fish.pack = skynet.pack
+fish.unpack = skynet.unpack
+fish.launch = skynet.launch
+fish.kill = skynet.kill
+fish.timeout = skynet.timeout
 
 local core_send = skynet.send
 local core_call = skynet.call
@@ -136,17 +174,25 @@ local core_call = skynet.call
 fish.raw_send = core_send
 fish.raw_call = core_call
 
+function fish.time()
+	return math.modf(skynet.time())
+end
+
 function fish.ret(...)
 	skynet.ret(skynet.pack(...))
+end
+
+function fish.error(...)
+	skynet.error(table.concat({...},"\t"))
 end
 
 function fish.dispatch_message(source,method,...)
 	if not _alive then
 		return
 	end
-	local func = _route[method]
-	assert(func ~= nil,string.format("no such method:%s",method))
-	return func(source,...)
+	local message_info = _route[method]
+	assert(message_info ~= nil,string.format("no such method:%s",method))
+	return message_info.handler(source,...)
 end
 
 function fish.schedule_timer(ti,cmd,...)
@@ -157,6 +203,10 @@ function fish.schedule_timer(ti,cmd,...)
 end
 
 function fish.start(start_func,stop_func,init_func)
+	if _alive == true then
+		skynet.error("already start,maybe reload")
+		return
+	end
 	assert(start_func ~= nil,string.format("no start func"))
 	assert(stop_func ~= nil,string.format("no stop func"))
 	_stop_func = stop_func
@@ -184,13 +234,40 @@ function fish.broadcast_client(clients,cmd,args)
 
 end
 
-function fish.register_message(cmd,func)
-	assert(_route[cmd] == nil)
-	_route[cmd] = func
+function fish.register_message(cmd,handler,proto)
+	local omessage_info = _route[cmd]
+	if omessage_info ~= nil then
+		skynet.error(string.format("cmd:%s has register before,now reload",cmd))
+	end
+	_route[cmd] = {handler = handler,proto = proto}
+end
+
+function fish.register_message_route(route)
+	for cmd,info in pairs(route) do
+		local omessage_info = _route[cmd]
+		if omessage_info ~= nil then
+			skynet.error(string.format("cmd:%s has register before,now reload",cmd))
+		end
+		_route[cmd] = {handler = info.handler,proto = proto}
+	end
+end
+
+function fish.register_message_reponse(map)
+
+end
+
+function fish.reload_func(func)
+	local ofunc = _reload_func
+	_reload_func = func
+	return ofunc
 end
 
 skynet.dispatch("lua", function (_, address, method, ...)
 	fish.dispatch_message(address, method, ...)
+end)
+
+fish.dispatch("gate",function (_, address, id, msg, sz)
+	fish.dispatch_message(id,msg,sz)
 end)
 
 skynet.dispatch("fish", function (_, address, cmd, ...)
@@ -200,10 +277,6 @@ skynet.dispatch("fish", function (_, address, cmd, ...)
 	else
 		error("Unknow command:"..cmd)
 	end
-end)
-
-skynet.dispatch("gate", function (_, address, id, msg, sz)
-	fish.dispatch_message(address,id,msg,sz)
 end)
 
 _G["require_script"] = fish.require

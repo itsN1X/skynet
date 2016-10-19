@@ -10,10 +10,15 @@ end
 
 fish.start(start,stop)
 
-fish.dispatch("lua",function (_, address, method, id, args, fallback)
-	fish.dispatch_message(methd,args)
+local function dispatch_agent_message(id,method,args)
+	fish.dispatch_message(id,method,args)
+end
+
+fish.dispatch("agent",function (_, address, method, id, args, fallback)
+	dispatch_agent_message(id,method,args)
 end)
 
-fish.dispatch("gate",function (_, address, id, msg, sz)
-	fish.dispatch_message(id,msg,sz)
-end)
+local export = {}
+export.dispatch_agent_message = dispatch_agent_message
+
+return export

@@ -1,5 +1,5 @@
 
-æ
+õ
 csproto/P_Common.protoSoulProtocol" 
 PVector2	
 x (	
@@ -124,7 +124,7 @@ teamLeader (
 PackEquipHole
 pos (
 
-id ("¯
+id ("¾
 PackEquipInfo
 
 id (
@@ -144,7 +144,8 @@ teamLeader (
 skill (2.SoulProtocol.PackEquipSkill)
 hole (2.SoulProtocol.PackEquipHole
 buff (-
-suitAttr (2.SoulProtocol.PackEquipAttr"×
+suitAttr (2.SoulProtocol.PackEquipAttr
+adExp ("×
 PackPropInfo
 
 id (

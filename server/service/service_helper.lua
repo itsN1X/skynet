@@ -11,7 +11,7 @@ function ()
 
 end)
 
-fish.register_message("new_service",function (source,name,file,...)
+fish.register_message("newservice",function (source,name,file,...)
 	local handle = skynet.newservice(file,...)
 	
 	local list = {}
@@ -30,7 +30,7 @@ fish.register_message("new_service",function (source,name,file,...)
 	fish.ret(handle)
 end)
 
-fish.register_message("init_service",function (source,handle,...)
+fish.register_message("initservice",function (source,handle,...)
 	_serivce_mgr[handle].init = true
 	_serivce_mgr[handle].init_args = table.pack(...)
 
@@ -38,7 +38,7 @@ fish.register_message("init_service",function (source,handle,...)
 	fish.ret(r)
 end)
 
-fish.register_message("stop_service",function (source,handle,...)
+fish.register_message("stopservice",function (source,handle,...)
 	local service_info = _serivce_mgr[handle]
 	_serivce_mgr[handle] = nil
 	local update_info = {}
@@ -46,6 +46,8 @@ fish.register_message("stop_service",function (source,handle,...)
 	for addr,info in pairs(_serivce_mgr) do
 		fish.set_handle(addr,update_info)
 	end
+	local r = fish.stop_service(handle,...)
+	fish.ret(r)
 end)
 
 fish.register_message("reload",function (source,handle,list)

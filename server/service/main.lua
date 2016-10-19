@@ -1,35 +1,34 @@
-local skynet = require "skynet"
 local fish = require "fish"
+local util = require "util"
+local startup = require "server_startup"
+local mongodb_collection = require "mongodb_collection"
 
-skynet.register_protocol {
-	name = "text",
-	id = skynet.PTYPE_TEXT,
-	pack = function(...) return ... end,
-	unpack = skynet.tostring,
-}
+fish.start(function ()
+	startup.start(1,7777,9999,"127.0.0.1:10105")
 
-local _service_mgr = {}
+	local libmongo = require "libmongo"
+	local u3d = libmongo.new("u3d")
+	-- mongodb_collection.createIndex(u3d)
+	
+	startup.create_service("remote_test","remote_test")
+	startup.create_service("gate_remote","gate_remote","8888")
+	startup.create_service("remote","remote","127.0.0.1","8888")
+	
+	
+	-- -- 	util.dump_table(u3d:dropdb())
+	-- 	local u3d = libmongo.new("u3d_bak")
+	-- util.dump_table(u3d:copydb("u3d"))
+	-- local u3d = libmongo.new("u3d")
+	util.dump_table(u3d.vip:findAll())
 
-local function start_service(name,file,...)
-	local handle = fish.new_service(name,file,...)
-	_service_mgr[handle] = {handle = handle,name = name,file = file,args = table.pack(...)}
-	return handle
-end
+	-- local service_pool = require "service_pool"
+	-- local agent_pool = service_pool.create("agent/agent",5,5)
+	-- agent_pool:dump()
+	-- startup.init_all_service()
 
-local function init_all_service()
-	for handle,start_info in pairs(_service_mgr) do
-		fish.init_service(handle)
-	end
-end
-
-skynet.start(function ()
-	skynet.newservice("service_helper")
-	local inst = skynet.launch("connector")
-	skynet.send(inst,"text","connect 127.0.0.1 10105")
-	-- local handle = start_service("login","login/login_boot")
-	-- start_service("gate","gate_client",handle,10109,1000)
-	-- start_service("agent","agent/agent")
-	-- start_service("mongodb","mongodb/mongodb_boot","127.0.0.1",10105)
-	-- start_service("http","http/http_boot",1989)
-	-- init_all_service()
+	local time = require "time"
+	print(time.next_week_midnight(fish.time()),time.this_week_midnight(fish.time()),time.this_week_midnight(fish.time(),0))
+	print(time.today_begin(fish.time()),time.day_time(fish.time(),11,20,0))
+end,function ()
+	fish.error("stop")
 end)
