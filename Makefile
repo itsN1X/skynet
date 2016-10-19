@@ -52,11 +52,11 @@ update3rd :
 
 # skynet
 
-CSERVICE = snlua logger gate harbor client connector
+CSERVICE = snlua logger gate harbor client remoteclient
 LUA_CLIB = skynet socketdriver bson mongo md5 netpack \
   clientsocket memory profile multicast \
   cluster crypt sharedata stm sproto lpeg \
-  mysqlaux debugchannel protobuf util cjson
+  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -138,14 +138,27 @@ $(LUA_CLIB_PATH)/mysqlaux.so : lualib-src/lua-mysqlaux.c | $(LUA_CLIB_PATH)
 $(LUA_CLIB_PATH)/debugchannel.so : lualib-src/lua-debugchannel.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 
-$(LUA_CLIB_PATH)/protobuf.so : 3rd/pbc/binding/lua/pbc-lua.c $(PBC_STATICLIB) | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -I3rd/pbc $^ -o $@
-
 $(LUA_CLIB_PATH)/util.so : server/clib/lua-util.c
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 
+$(LUA_CLIB_PATH)/connector.so : server/clib/lua-connector.c lualib-src/lua-seri.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src -Ilualib-src $^ -o $@
+
+$(LUA_CLIB_PATH)/protobuf.so : 3rd/pbc/binding/lua/pbc-lua.c $(PBC_STATICLIB) | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/pbc $^ -o $@
+
+$(LUA_CLIB_PATH)/lfs.so : 3rd/luafilesystem/src/lfs.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
 $(LUA_CLIB_PATH)/cjson.so : 3rd/lua-cjson/lua_cjson.c 3rd/lua-cjson/strbuf.c 3rd/lua-cjson/fpconv.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-cjson $^ -o $@ 
+
+$(LUA_CLIB_PATH)/timerheap.so : server/clib/lua-timerheap.c server/clib/minheap.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+	
+$(LUA_CLIB_PATH)/time.so : server/clib/lua-time.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
