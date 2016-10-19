@@ -21,7 +21,7 @@ socket_message[1] = function(id, size, data)
 	end
 	local data_list = core.collect(connector.buffer,data,size)
 	for _,data in pairs(data_list) do
-		fish.dispatch_message(id,"socket_data",data.service,data.method,data.content)
+		fish.dispatch_message(id,"socket_data",data.method,table.unpack(data.content))
 	end
 end
 

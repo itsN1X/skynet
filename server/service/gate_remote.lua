@@ -23,18 +23,19 @@ local command = {}
 
 function command.auth(fd,args)
 	local fd_info = _fd_mgr[fd]
-	fish.raw_send(fd_info.client,"client",fish.pack({method = "auth_success",content = {hello = "world"}}))
+	fish.raw_send(fd_info.client,"client",fish.pack({method = "auth_success",content = {"i am gate"}}))
 end
 
 function command.forward_service(fd,service,method,args)
-
+	local fd_info = _fd_mgr[fd]
+	fish.send(fish.handle(service),method,fd_info.client,args)
 end
 
 fish.register_message("message",function (surce,fd,msg,sz)
 	local fd_info = _fd_mgr[fd]
 	local args = fish.unpack(msg,sz)
 	local func = command[args.message]
-	func(table.unpack(fd,args.args))
+	func(fd,table.unpack(args.args))
 end)
 
 fish.register_message("connect",function (surce,fd,addr)
