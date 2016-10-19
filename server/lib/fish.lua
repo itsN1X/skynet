@@ -101,15 +101,19 @@ function fish.require(file)
 	end
 
 	local module = require(file)
+	_script_mgr[file] = {module = module}
 
-	local result = setmetatable({},{__index = function (self,method)
-		local func = module[method]
-		self[method] = func
-		return func
-	end})
-	
+	local result
+	if type(module) == "table" then
+		result = setmetatable({},{__index = function (self,method)
+			local func = module[method]
+			self[method] = func
+			return func
+		end})
+		
+	end
 	_script_mgr[file] = {proxy = result,module = module}
-
+	
 	fish.send(".script_manager","report",skynet.self(),file)	
 	return result
 end
