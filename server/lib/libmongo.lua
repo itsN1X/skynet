@@ -30,6 +30,10 @@ function mongodb.new(name)
 	return setmetatable(db,db_meta)
 end
 
+function mongodb.listdb()
+	return fish.call(mongodb_handle,"runCommand",{database = "admin",args = {"listDatabases", 1}})
+end
+
 function mongodb:copydb(to)
 	return fish.call(mongodb_handle,"runCommand",{database = "admin",args = {"copydb",1,"fromdb",self.database,"todb",to}})
 end

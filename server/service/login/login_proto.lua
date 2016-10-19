@@ -15,7 +15,7 @@ fish.register_message(10007,	serv.SyncStamp,		"SoulProtocol.SyncStampReq")
 fish.register_message(10008,	serv.RecoverRole,	"SoulProtocol.DeleteRoleReq")
 
 
-fish.register_reponse("OnAuth",40000,"SoulProtocol.AuthMsg")
-fish.register_reponse("OnCreateName",40003,"SoulProtocol.AuthMsg")
+fish.register_reponse("OnAuth",			40000,		"SoulProtocol.AuthMsg")
+fish.register_reponse("OnCreateName",	40003,		"SoulProtocol.AuthMsg")
 
 print("reload")

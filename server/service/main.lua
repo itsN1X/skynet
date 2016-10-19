@@ -7,6 +7,7 @@ fish.start(function ()
 	startup.start(1,7777,9999,"127.0.0.1:10105")
 
 	local libmongo = require "libmongo"
+	util.dump_table(libmongo.listdb())
 	local u3d = libmongo.new("u3d")
 	-- mongodb_collection.createIndex(u3d)
 	
