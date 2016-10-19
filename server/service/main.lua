@@ -10,6 +10,7 @@ fish.start(function ()
 	local u3d = libmongo.new("u3d")
 	-- mongodb_collection.createIndex(u3d)
 	
+	startup.create_service("login","login/login_boot")
 	startup.create_service("remote_test","remote_test")
 	startup.create_service("gate_remote","gate_remote","8888")
 	startup.create_service("remote","remote","127.0.0.1","8888")
@@ -19,7 +20,7 @@ fish.start(function ()
 	-- 	local u3d = libmongo.new("u3d_bak")
 	-- util.dump_table(u3d:copydb("u3d"))
 	-- local u3d = libmongo.new("u3d")
-	util.dump_table(u3d.vip:findAll())
+	-- util.dump_table(u3d.vip:findAll())
 
 	-- local service_pool = require "service_pool"
 	-- local agent_pool = service_pool.create("agent/agent",5,5)

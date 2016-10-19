@@ -14,4 +14,5 @@ function _M.enter_game(...)
 
 end
 
+print("reload serv")
 return _M

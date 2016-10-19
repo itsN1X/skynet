@@ -42,11 +42,10 @@ local _init_func
 local _stop_func
 local _reload_func
 local _route = {}
+local _reponse = {}
 local _alive = false
 local _script_mgr = {}
 local _handle_mgr = {}
-local _request_proto_file
-local _reponse_proto_file
 
 
 function system.init(source,...)
@@ -81,16 +80,18 @@ function system.reload(source,list)
 		package.loaded[path] = nil
 		local module = require(path)
 
-		for name,value in pairs(module) do
-			info.proxy[name] = value
+		if type(module) == "table" then
+			for name,value in pairs(module) do
+				info.proxy[name] = value
+			end
+			setmetatable(info.proxy,{__index = function (self,method)
+				local func = module[method]
+				self[method] = func
+				return func
+			end})
 		end
-
-		setmetatable(info.proxy,{__index = function (self,method)
-			local func = module[method]
-			self[method] = func
-			return func
-		end})
 	end
+	fish.ret("ok")
 end
 
 function fish.require(file)
@@ -242,18 +243,13 @@ function fish.register_message(cmd,handler,proto)
 	_route[cmd] = {handler = handler,proto = proto}
 end
 
-function fish.register_message_route(route)
-	for cmd,info in pairs(route) do
-		local omessage_info = _route[cmd]
-		if omessage_info ~= nil then
-			skynet.error(string.format("cmd:%s has register before,now reload",cmd))
-		end
-		_route[cmd] = {handler = info.handler,proto = proto}
+
+function fish.register_reponse(cmd,id,proto)
+	local oreponse_info = _reponse[cmd]
+	if oreponse_info ~= nil then
+		skynet.error(string.format("cmd:%s has register before,now reload",cmd))
 	end
-end
-
-function fish.register_message_reponse(map)
-
+	_reponse[cmd] = {id = id,proto = proto}
 end
 
 function fish.reload_func(func)

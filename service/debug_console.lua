@@ -301,3 +301,25 @@ function COMMAND.ping(fd, address)
 	ti = skynet.now() - ti
 	return tostring(ti)
 end
+
+local fish = {
+	PTYPE_FISH = 100,
+	PTYPE_GATE = 101,
+	PTYPE_AGENT = 102,
+}
+
+skynet.register_protocol {
+	name = "fish",
+	id = fish.PTYPE_FISH,
+	pack = skynet.pack,
+	unpack = skynet.unpack,
+}
+
+function COMMAND.stop()
+	return skynet.call(".startup","fish","stop")
+end
+
+function COMMAND.reload_file(fd,...)
+	local list = {...}
+	return skynet.call(".script_manager","lua","reload",list)
+end

@@ -1,4 +1,5 @@
 local fish = require "fish"
+local util = require "util"
 
 
 fish.start(function ()
@@ -30,7 +31,7 @@ fish.register_message("reload",function (source,file_list)
 				list = {}
 				reload_list[handle] = list
 			end
-			table.insert(file)
+			table.insert(list,file)
 		end
 	end
 	
