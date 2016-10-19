@@ -14,8 +14,8 @@ fish.start(function ()
 	startup.create_service("login","login/login_boot")
 	startup.create_service("remote_test","remote_test")
 	startup.create_service("gate_remote","gate_remote","8888")
-	startup.create_service("remote","remote","127.0.0.1","8888")
-	
+	startup.create_service("remote_interaction","remote","remote_interaction/remote_interaction_proto","127.0.0.1","8888")
+	startup.create_service("remote_team","remote","remote_team/remote_team_proto","127.0.0.1","8888")
 	
 	-- -- 	util.dump_table(u3d:dropdb())
 	-- 	local u3d = libmongo.new("u3d_bak")

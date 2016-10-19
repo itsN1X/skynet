@@ -19,14 +19,22 @@ fish.start(start,stop,function ()
 	fish.dump_handle()
 end)
 
+local command = {}
+
+function command.auth(fd,args)
+	local fd_info = _fd_mgr[fd]
+	fish.raw_send(fd_info.client,"client",fish.pack({method = "auth_success",content = {hello = "world"}}))
+end
+
+function command.forward_service(fd,service,method,args)
+
+end
 
 fish.register_message("message",function (surce,fd,msg,sz)
 	local fd_info = _fd_mgr[fd]
-	fish.dump_handle()
 	local args = fish.unpack(msg,sz)
-	fish.send(fish.handle(args.service),args.method,args.content)
-
-	fish.raw_send(fd_info.client,"client",fish.pack({method = "pong",content = {hello = "world"}}))
+	local func = command[args.message]
+	func(table.unpack(fd,args.args))
 end)
 
 fish.register_message("connect",function (surce,fd,addr)

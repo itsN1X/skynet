@@ -231,6 +231,10 @@ function fish.call(handle,method,...)
 	return core_call(handle,"lua",method,...)
 end
 
+function fish.send_agent(agent,id,cmd,args,fallback)
+	core_send(agent,"agent",id,cmd,args,fallback)
+end
+
 function fish.send_client(client,cmd,args)
 
 end

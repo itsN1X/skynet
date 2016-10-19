@@ -84,8 +84,8 @@ skynet.register_protocol {
 }
 
 
-function _M.send(id,service,method,content)
-	local data,size = fish.pack({service = service,method = method,content = content})
+function _M.send(id,message,...)
+	local data,size = fish.pack({message = message,args = {...}})
 	core.send(id,data,size)
 end
 

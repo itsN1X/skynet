@@ -14,7 +14,7 @@ local function dispatch_agent_message(id,method,args)
 	fish.dispatch_message(id,method,args)
 end
 
-fish.dispatch("agent",function (_, address, method, id, args, fallback)
+fish.dispatch("agent",function (_, address, id, method, args, fallback)
 	dispatch_agent_message(id,method,args)
 end)
 
