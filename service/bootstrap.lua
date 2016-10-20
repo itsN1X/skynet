@@ -43,6 +43,17 @@ skynet.start(function()
 		skynet.name("DATACENTER", datacenter)
 	end
 	skynet.newservice "service_mgr"
-	pcall(skynet.newservice,skynet.getenv "start" or "main")
+	local r , err = pcall(skynet.newservice,skynet.getenv "start" or "main")
+	if not r then
+		skynet.register_protocol {
+			name = "text",
+			id = skynet.PTYPE_TEXT,
+			pack = function (...) return ... end,
+			unpack = skynet.unpack,
+		}
+		skynet.call(".logger","text","start skynet error")
+		io.stderr:write("start server error,please cat the skynet.log\n")
+		skynet.abort()
+	end
 	skynet.exit()
 end)

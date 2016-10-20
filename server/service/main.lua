@@ -43,6 +43,7 @@ fish.start(function ()
 	local time = require "time"
 	print(time.next_week_midnight(fish.time()),time.this_week_midnight(fish.time()),time.this_week_midnight(fish.time(),0))
 	print(time.today_begin(fish.time()),time.day_time(fish.time(),11,20,0))
+	assert(false)
 end,function ()
 	fish.error("stop")
 end)

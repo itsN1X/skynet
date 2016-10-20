@@ -44,6 +44,8 @@ logger_cb(struct skynet_context * context, void *ud, int type, int session, uint
 		fwrite(msg, sz , 1, inst->handle);
 		fprintf(inst->handle, "\n");
 		fflush(inst->handle);
+		if (session != 0)
+			skynet_send(context, 0, source, PTYPE_RESPONSE|PTYPE_TAG_DONTCOPY, session, NULL, 0);
 		break;
 	}
 

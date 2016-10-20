@@ -183,6 +183,14 @@ function fish.time()
 	return math.modf(skynet.time())
 end
 
+function fish.abort(text)
+	if text ~= nil then
+		skynet.call(".logger","text",text)
+	end
+	skynet.abort()
+end
+
+
 function fish.ret(...)
 	skynet.ret(skynet.pack(...))
 end
