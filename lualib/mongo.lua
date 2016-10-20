@@ -335,6 +335,7 @@ function mongo_collection:insert(doc)
 	local pack = driver.insert(0, self.full_name, doc)
 	-- flags support 1:	ContinueOnError
 	sock:request(pack)
+	driver.free_doc(doc)
 end
 
 function mongo_collection:safe_insert(doc)
@@ -342,15 +343,12 @@ function mongo_collection:safe_insert(doc)
 end
 
 function mongo_collection:batch_insert(docs)
-	for	i=1,#docs do
-		if docs[i]._id == nil then
-			docs[i]._id	= bson.objectid()
-		end
-		docs[i]	= bson_encode(docs[i])
-	end
 	local sock = self.connection.__sock
 	local pack = driver.insert(0, self.full_name, docs)
 	sock:request(pack)
+	for	i=1,#docs do
+		driver.free_doc(docs[i])
+	end
 end
 
 function mongo_collection:update(selector,update,upsert,multi)

@@ -46,7 +46,7 @@ function collection_meta:insert(doc)
 	if doc._id == nil then
 		doc._id	= bson.objectid()
 	end
-	local doc_ptr = bson.encode(doc)
+	local doc_ptr = driver.malloc_doc(bson.encode(doc))
 	fish.send(mongodb_handle,"insert",{database = self.database,collection = self.collection,doc = doc_ptr})
 end
 
@@ -55,7 +55,7 @@ function collection_meta:insertBatch(docs)
 		if docs[i]._id == nil then
 			docs[i]._id	= bson.objectid()
 		end
-		docs[i]	= bson.encode(docs[i])
+		docs[i]	=  driver.malloc_doc(docs[i])
 	end
 	fish.send(mongodb_handle,"insertBatch",{database = self.database,collection = self.collection,docs = docs})
 end
