@@ -22,7 +22,7 @@ end)
 
 fish.register_message("req",function (source,client,args)
 	util.dump_table(args,"req")
-	remote.send_client_name(client,args.handle,"rsp",args)
+	remote.send_client_handle(client,args.handle,"rsp",args)
 end)
 
 fish.register_message("rsp",function (source,args)

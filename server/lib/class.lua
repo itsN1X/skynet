@@ -40,11 +40,14 @@ function class(name,super)
 	})
 
 	if super then
+		--子类提供一个super接口，可以直接防问父类的函数
 		vtbl.super = _class[super]
+		--子类没有的函数假如父类有的话，把函数放到子类当中，以便下次防问少一次metatable的防问
 		setmetatable(vtbl,{__index=
 			function(t,k)
 				local ret=_class[super][k]
 				vtbl[k]=ret
+				--同时记录子类有哪些函数是父类的
 				table.insert(class_type.super_method,k)
 				return ret
 			end
@@ -92,4 +95,8 @@ end
 
 function dump_class(name)
 	util.dump_table(_class_map[name],name)
+end
+
+function dump_class_inst(name)
+	util.dump_table(_class_instance[name],name)
 end

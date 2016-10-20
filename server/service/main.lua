@@ -4,8 +4,17 @@ local util = require "util"
 local startup = require "server_startup"
 local mongodb_collection = require "mongodb.mongodb_collection"
 
+local second = require "second"
 fish.start(function ()
 	startup.start(1,7777,9999,"127.0.0.1:10105")
+
+	local inst = second.new()
+	inst:test()
+
+	dump_class_inst("second")
+	inst = nil
+	collectgarbage "collect"
+	dump_class_inst("second")
 
 	local libmongo = require "libmongo"
 	util.dump_table(libmongo.listdb())
@@ -19,7 +28,7 @@ fish.start(function ()
 	local handle_team = startup.create_service("remote_team","remote_client","remote_team/remote_team_proto","127.0.0.1","8888")
 
 	remote.send_gate_name(handle_interaction,"remote_test","ping",{a = 1,b = 2})
-	remote.send_gate_handle(handle_team,handle,"ping",{handle = handle,a = 3,b = 4})
+	remote.send_gate_handle(handle_team,handle,"req",{handle = handle,a = 3,b = 4})
 	-- -- 	util.dump_table(u3d:dropdb())
 	-- 	local u3d = libmongo.new("u3d_bak")
 	-- util.dump_table(u3d:copydb("u3d"))

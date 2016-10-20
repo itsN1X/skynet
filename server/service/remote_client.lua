@@ -48,26 +48,27 @@ fish.register_message("leave",function (source,args)
 	_role_mgr[args.id] = nil
 end)
 
-fish.register_message("forward_service_name",function (source,service,method,args)
+fish.register_message("forward_service_name",function (source,data,size)
 	if _id == nil then
 		fish.error(string.format("remote server ip:%s,port:%s down,drop message:%s",_ip,_port,method))
 		return
 	end
-	connector.send(_id,"forward_service_name",service,method,args)
+	connector.send(_id,data,size)
 end)
 
-fish.register_message("forward_service_handle",function (source,handle,method,args)
+fish.register_message("forward_service_handle",function (source,data,size)
 	if _id == nil then
 		fish.error(string.format("remote server ip:%s,port:%s down,drop message:%s",_ip,_port,method))
 		return
 	end
-	connector.send(_id,"forward_service_handle",handle,method,args)
+	connector.send(_id,data,size)
 end)
 
 fish.register_message("socket_connected",function (id,address)
 	_id = id
 	fish.error(string.format("remote connected!id:%d,ip:%s,port:%s",_id,_ip,_port))
-	connector.send(_id,"auth","i am fish")
+	local data,size = fish.pack({message = "auth",args = {"i am fish"}})
+	connector.send(_id,data,size)
 end)
 
 fish.register_message("socket_close",function (id)
