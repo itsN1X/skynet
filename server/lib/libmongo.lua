@@ -43,10 +43,20 @@ function mongodb:dropdb()
 end
 
 function collection_meta:insert(doc)
-	fish.send(mongodb_handle,"insert",{database = self.database,collection = self.collection,doc = doc})
+	if doc._id == nil then
+		doc._id	= bson.objectid()
+	end
+	local doc_ptr = bson.encode(doc)
+	fish.send(mongodb_handle,"insert",{database = self.database,collection = self.collection,doc = doc_ptr})
 end
 
 function collection_meta:insertBatch(docs)
+	for	i=1,#docs do
+		if docs[i]._id == nil then
+			docs[i]._id	= bson.objectid()
+		end
+		docs[i]	= bson.encode(docs[i])
+	end
 	fish.send(mongodb_handle,"insertBatch",{database = self.database,collection = self.collection,docs = docs})
 end
 

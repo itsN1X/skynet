@@ -529,6 +529,23 @@ reply_length(lua_State *L) {
 	return 1;
 }
 
+static int
+malloc_doc(lua_State *L) {
+	void *doc = lua_touserdata(L, -1);
+	int32_t doc_len = get_length((document)doc);
+	void *ndoc = malloc(doc_len);
+	memcpy(ndoc,doc,doc_len);
+	lua_pushlightuserdata(L,ndoc);
+	return 1;
+}
+
+static int
+free_doc(lua_State *L) {
+	void *doc = lua_touserdata(L, -1);
+	free(doc);
+	return 0;
+}
+
 int
 luaopen_mongo_driver(lua_State *L) {
 	luaL_checkversion(L);
@@ -541,6 +558,8 @@ luaopen_mongo_driver(lua_State *L) {
 		{ "update", op_update },
 		{ "insert", op_insert },
 		{ "length", reply_length },
+		{ "malloc_doc", malloc_doc },
+		{ "free_doc", free_doc },
 		{ NULL, NULL },
 	};
 

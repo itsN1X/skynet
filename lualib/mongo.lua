@@ -331,11 +331,8 @@ end
 mongo_collection.getCollection = mongo_db.getCollection
 
 function mongo_collection:insert(doc)
-	if doc._id == nil then
-		doc._id	= bson.objectid()
-	end
 	local sock = self.connection.__sock
-	local pack = driver.insert(0, self.full_name, bson_encode(doc))
+	local pack = driver.insert(0, self.full_name, doc)
 	-- flags support 1:	ContinueOnError
 	sock:request(pack)
 end
@@ -359,8 +356,10 @@ end
 function mongo_collection:update(selector,update,upsert,multi)
 	local flags	= (upsert and 1	or 0) +	(multi and 2 or	0)
 	local sock = self.connection.__sock
-	local pack = driver.update(self.full_name, flags, bson_encode(selector), bson_encode(update))
+	local pack = driver.update(self.full_name, flags, selector, update)
 	sock:request(pack)
+	driver.free_doc(selector)
+	driver.free_doc(update)
 end
 
 function mongo_collection:delete(selector, single)
@@ -377,7 +376,10 @@ function mongo_collection:findOne(query, selector)
 	-- we must hold	req	(req.data),	because	req.document is	a lightuserdata, it's a	pointer	to the string (req.data)
 	local req =	sock:request(pack, request_id)
 	local doc =	req.document
-	return bson_decode(doc)
+
+	if doc ~= nil then
+		return driver.malloc_doc(doc)
+	end
 end
 
 function mongo_collection:find(query, selector)
@@ -600,13 +602,13 @@ function mongo_cursor:next()
 	if self.__ptr == nil then
 		error "Call	hasNext	first"
 	end
-	local r	= bson_decode(self.__document[self.__ptr])
+	local r	= self.__document[self.__ptr]
 	self.__ptr = self.__ptr	+ 1
 	if self.__ptr >	#self.__document then
 		self.__ptr = nil
 	end
 
-	return r
+	return driver.malloc_doc(r)
 end
 
 function mongo_cursor:close()

@@ -33,7 +33,7 @@ fish.start(function ()
 	-- 	local u3d = libmongo.new("u3d_bak")
 	-- util.dump_table(u3d:copydb("u3d"))
 	-- local u3d = libmongo.new("u3d")
-	-- util.dump_table(u3d.vip:findAll())
+	util.dump_table(u3d.role:findAll())
 
 	-- local service_pool = require "service_pool"
 	-- local agent_pool = service_pool.create("agent/agent",5,5)
@@ -43,7 +43,6 @@ fish.start(function ()
 	local time = require "time"
 	print(time.next_week_midnight(fish.time()),time.this_week_midnight(fish.time()),time.this_week_midnight(fish.time(),0))
 	print(time.today_begin(fish.time()),time.day_time(fish.time(),11,20,0))
-	assert(false)
 end,function ()
 	fish.error("stop")
 end)
