@@ -9,6 +9,7 @@ end
 
 
 register_collection("role",{{"id"},{"id","account"}})
+register_collection("test",{{"id"}})
 
 
 local export = {}

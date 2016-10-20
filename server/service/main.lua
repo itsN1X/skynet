@@ -34,7 +34,7 @@ fish.start(function ()
 	-- util.dump_table(u3d:copydb("u3d"))
 	-- local u3d = libmongo.new("u3d")
 	util.dump_table(u3d.role:findAll())
-
+	u3d.test:insert({a = 1,b= 2})
 	-- local service_pool = require "service_pool"
 	-- local agent_pool = service_pool.create("agent/agent",5,5)
 	-- agent_pool:dump()
