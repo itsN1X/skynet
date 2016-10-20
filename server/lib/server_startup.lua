@@ -20,7 +20,7 @@ function _M.start(id,console,http,mongodb)
 		fish.newservice("http","http/http_boot",http)
 	end
 	if mongodb ~= nil then
-		_M.create_service("mongodb","mongodb","127.0.0.1","10105")
+		_M.create_service("mongodb","mongodb/mongodb_boot","127.0.0.1","10105")
 	end
 end
 

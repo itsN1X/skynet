@@ -2,7 +2,7 @@ local fish = require "fish"
 local remote = require "remote"
 local util = require "util"
 local startup = require "server_startup"
-local mongodb_collection = require "mongodb_collection"
+local mongodb_collection = require "mongodb.mongodb_collection"
 
 fish.start(function ()
 	startup.start(1,7777,9999,"127.0.0.1:10105")
