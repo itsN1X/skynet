@@ -1,4 +1,5 @@
 local fish = require "fish"
+local remote = require "remote"
 local util = require "util"
 local startup = require "server_startup"
 local mongodb_collection = require "mongodb_collection"
@@ -12,12 +13,13 @@ fish.start(function ()
 	-- mongodb_collection.createIndex(u3d)
 	
 	startup.create_service("login","login/login_boot")
-	startup.create_service("remote_test","remote_test")
-	startup.create_service("gate_remote","gate_remote","8888")
-	local handle_interaction = startup.create_service("remote_interaction","remote","remote_interaction/remote_interaction_proto","127.0.0.1","8888")
-	local handle_team = startup.create_service("remote_team","remote","remote_team/remote_team_proto","127.0.0.1","8888")
-	fish.send(handle_interaction,"forward_service","remote_test","ping",{a = 1,b = 2})
-	fish.send(handle_interaction,"forward_service","remote_test","ping",{a = 3,b = 4})
+	local handle = startup.create_service("remote_test","remote_test")
+	startup.create_service("remote_gate","remote_gate","8888")
+	local handle_interaction = startup.create_service("remote_interaction","remote_client","remote_interaction/remote_interaction_proto","127.0.0.1","8888")
+	local handle_team = startup.create_service("remote_team","remote_client","remote_team/remote_team_proto","127.0.0.1","8888")
+
+	remote.send_gate_name(handle_interaction,"remote_test","ping",{a = 1,b = 2})
+	remote.send_gate_handle(handle_team,handle,"ping",{handle = handle,a = 3,b = 4})
 	-- -- 	util.dump_table(u3d:dropdb())
 	-- 	local u3d = libmongo.new("u3d_bak")
 	-- util.dump_table(u3d:copydb("u3d"))

@@ -18,8 +18,12 @@ end)
 
 local command = {}
 
-function command.forward_service(source,service,method,data)
+function command.forward_service_name(source,service,method,data)
 	fish.send(fish.handle(service),method,data)
+end
+
+function command.forward_service_handle(source,handle,method,data)
+	fish.send(handle,method,data)
 end
 
 function command.forward_agent(source,method,id,data)
@@ -44,12 +48,20 @@ fish.register_message("leave",function (source,args)
 	_role_mgr[args.id] = nil
 end)
 
-fish.register_message("forward_service",function (source,service,method,args)
+fish.register_message("forward_service_name",function (source,service,method,args)
 	if _id == nil then
 		fish.error(string.format("remote server ip:%s,port:%s down,drop message:%s",_ip,_port,method))
 		return
 	end
-	connector.send(_id,"forward_service",service,method,args)
+	connector.send(_id,"forward_service_name",service,method,args)
+end)
+
+fish.register_message("forward_service_handle",function (source,handle,method,args)
+	if _id == nil then
+		fish.error(string.format("remote server ip:%s,port:%s down,drop message:%s",_ip,_port,method))
+		return
+	end
+	connector.send(_id,"forward_service_handle",handle,method,args)
 end)
 
 fish.register_message("socket_connected",function (id,address)

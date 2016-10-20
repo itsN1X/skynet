@@ -26,9 +26,14 @@ function command.auth(fd,args)
 	fish.raw_send(fd_info.client,"client",fish.pack({method = "auth_success",content = {"i am gate"}}))
 end
 
-function command.forward_service(fd,service,method,args)
+function command.forward_service_name(fd,service,method,args)
 	local fd_info = _fd_mgr[fd]
 	fish.send(fish.handle(service),method,fd_info.client,args)
+end
+
+function command.forward_service_handle(fd,handle,method,args)
+	local fd_info = _fd_mgr[fd]
+	fish.send(handle,method,fd_info.client,args)
 end
 
 fish.register_message("message",function (surce,fd,msg,sz)
