@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 require "skynet.manager"
 local codecache = require "skynet.codecache"
+local data_collector = require "data_collector"
 
 local fish = {
 	PTYPE_FISH = 100,
@@ -50,7 +51,9 @@ local _handle_mgr = {}
 
 function system.init(source,...)
 	assert(_init_func ~= nil,"no init func")
+	data_collector.func_start()
 	fish.ret(_init_func(source,...))
+	data_collector.func_over("service init")
 end
 
 function system.stop(source,...)
@@ -205,7 +208,9 @@ function fish.dispatch_message(source,method,...)
 	end
 	local message_info = _route[method]
 	assert(message_info ~= nil,string.format("no such method:%s",method))
-	return message_info.handler(source,...)
+	data_collector.func_start()
+	message_info.handler(source,...)
+	data_collector.func_over(method)
 end
 
 function fish.schedule_timer(ti,cmd,...)
@@ -225,9 +230,18 @@ function fish.start(start_func,stop_func,init_func)
 	_stop_func = stop_func
 	_init_func = init_func
 	skynet.start(function ()
+		data_collector.func_start()
 		start_func()
+		data_collector.func_over("service start")
 	end)
 	_alive = true
+
+	skynet.timeout(100,function ()
+		data_collector.collect_message("test1",2313545)
+		data_collector.collect_message("test1",23545)
+		data_collector.collect_message("test2",235345)
+		data_collector.report(fish.error)
+	end)
 end
 
 

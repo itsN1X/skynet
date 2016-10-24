@@ -17,7 +17,7 @@ fish.start(function ()
 	dump_class_inst("second")
 
 	local libmongo = require "libmongo"
-	util.dump_table(libmongo.listdb())
+	-- util.dump_table(libmongo.listdb())
 	local u3d = libmongo.new("u3d")
 	-- mongodb_collection.createIndex(u3d)
 	
@@ -33,7 +33,7 @@ fish.start(function ()
 	-- 	local u3d = libmongo.new("u3d_bak")
 	-- util.dump_table(u3d:copydb("u3d"))
 	-- local u3d = libmongo.new("u3d")
-	util.dump_table(u3d.role:findAll())
+	-- util.dump_table(u3d.role:findAll())
 	u3d.test:insert({a = 1,b= 2})
 	-- local service_pool = require "service_pool"
 	-- local agent_pool = service_pool.create("agent/agent",5,5)

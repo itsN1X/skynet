@@ -2,13 +2,18 @@ local fish = require "fish"
 local connector = require "connector"
 local util = require "util"
 
+
+local STATE = {Connecting = 0,Connected = 1,Close = 2}
 local _file,_ip,_port = ...
 local _id
+local _state
 local _role_mgr = {}
 
 fish.start(function ()
 	fish.require(_file)
-	local id = connector.connect(_ip,tonumber(_port))
+	_state = STATE.Connecting
+	_id = connector.connect(_ip,tonumber(_port))
+	fish.schedule_timer(100,"socket_update")
 end,function (source,...)
 	fish.error("stop",...)
 end,function (source,...)
@@ -69,6 +74,7 @@ fish.register_message("socket_connected",function (id,address)
 	fish.error(string.format("remote connected!id:%d,ip:%s,port:%s",_id,_ip,_port))
 	local data,size = fish.pack({message = "auth",args = {"i am fish"}})
 	connector.send(_id,data,size)
+	_state = STATE.Connected
 end)
 
 fish.register_message("socket_close",function (id)
@@ -76,6 +82,7 @@ fish.register_message("socket_close",function (id)
 	fish.error(string.format("remote closed!id:%d,ip:%s,port:%s",_id,_ip,_port))
 	_id = nil
 	fish.dispatch_message(id,"closed")
+	_state = STATE.Close
 end)
 
 fish.register_message("socket_error",function (id)
@@ -83,11 +90,22 @@ fish.register_message("socket_error",function (id)
 	fish.error(string.format("remote error!id:%d,ip:%s,port:%s",_id,_ip,_port))
 	_id = nil
 	fish.dispatch_message(id,"closed")
+	_state = STATE.Close
 end)
 
 fish.register_message("socket_data",function (id,method,...)
 	local func = command[method]
 	func(id,...)
+end)
+
+fish.register_message("socket_update",function (id,...)
+	fish.schedule_timer(100,"socket_update")
+	
+	if _state == STATE.Close then
+		_id = connector.connect(_ip,tonumber(_port))
+		_state = STATE.Connecting
+		fish.error(string.format("remote connecting!id:%d,ip:%s,port:%s",_id,_ip,_port))
+	end
 end)
 
 
