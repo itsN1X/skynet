@@ -6,6 +6,7 @@ CSERVICE_PATH ?= cservice
 SKYNET_BUILD_PATH ?= .
 
 CFLAGS = -g -Wall -I$(LUA_INC) $(MYCFLAGS)
+CXXFLAGS = -g -Wall -fPIC -I$(LUA_INC) $(MYCFLAGS)
 # CFLAGS += -DUSE_PTHREAD_LOCK
 
 # lua
@@ -138,8 +139,12 @@ $(LUA_CLIB_PATH)/mysqlaux.so : lualib-src/lua-mysqlaux.c | $(LUA_CLIB_PATH)
 $(LUA_CLIB_PATH)/debugchannel.so : lualib-src/lua-debugchannel.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 
-$(LUA_CLIB_PATH)/util.so : server/clib/lua-util.c
-	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
+$(LUA_CLIB_PATH)/util.so : server/clib/lua-util.c server/clib/authcode/base64.o \
+  	server/clib/authcode/com_encrypt.o \
+  	server/clib/authcode/md5.c \
+  	server/clib/authcode/md5cpp.o \
+  	server/clib/authcode/proto-encrypt.c | $(LUA_CLIB_PATH)
+	$(CC) $(CXXFLAGS) $(SHARED) $^ -o $@ -Iserver/clib/authcode -lstdc++
 
 $(LUA_CLIB_PATH)/connector.so : server/clib/lua-connector.c lualib-src/lua-seri.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src -Ilualib-src $^ -o $@

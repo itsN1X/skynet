@@ -1,4 +1,6 @@
 require "lfs"
+local core = require "util.core"
+local json = require "cjson"
 local _M = {}
 
 local function get_type_first_print( t )
@@ -76,5 +78,26 @@ function _M.find_dir_files(r_table,path,suffix,is_path_name,recursive)
     end
 end
 
+function _M.encode_token(args,key,expiry)
+    local json_string = json.encode(args)
+    local stream = core.authcode(json_string,key,true,expiry)
+    if stream == nil then
+        return
+    end
+    return stream
+end
+
+function _M.decode_token(token,key,expiry)
+    local jsonstream = core.authcode(token,key,false,expiry)
+    if jsonstream == nil then
+        return nil
+    end
+
+    local token_table = json.decode(jsonstream)
+    if token_table == nil then
+        return nil
+    end
+    return token_table
+end
 
 return _M

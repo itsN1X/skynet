@@ -4,7 +4,7 @@ local util = require "util"
 
 
 local STATE = {Connecting = 0,Connected = 1,Close = 2}
-local _file,_ip,_port = ...
+local _file,_key,_ip,_port = ...
 local _id
 local _state
 local _role_mgr = {}
@@ -41,8 +41,14 @@ function command.forward_agent(source,method,id,data)
 end
 
 function command.auth_success(source,args)
-	fish.error(string.format("remote auth success!id:%d,ip:%s,port:%s",_id,_ip,_port))
-	fish.dispatch_message(_id,"connected",address)
+	
+	local args = util.decode_token(args,_key,3600)
+	if args.hello == nil or args.hello ~= "client" then
+		fish.error(string.format("remote auth failed!id:%d,ip:%s,port:%s",_id,_ip,_port))
+	else
+		fish.error(string.format("remote auth success!id:%d,ip:%s,port:%s",_id,_ip,_port))
+		fish.dispatch_message(_id,"connected",address)
+	end
 end
 
 fish.register_message("enter",function (source,args)
@@ -72,7 +78,8 @@ end)
 fish.register_message("socket_connected",function (id,address)
 	_id = id
 	fish.error(string.format("remote connected!id:%d,ip:%s,port:%s",_id,_ip,_port))
-	local data,size = fish.pack({message = "auth",args = {"i am fish"}})
+	local token = util.encode_token({hello = "gate"},_key,3600)
+	local data,size = fish.pack({message = "auth",args = {token}})
 	connector.send(_id,data,size)
 	_state = STATE.Connected
 end)

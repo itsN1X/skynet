@@ -3,19 +3,23 @@ local remote = require "remote"
 local util = require "util"
 local startup = require "server_startup"
 local mongodb_collection = require "mongodb.mongodb_collection"
-
+local loadfilex = require "loadfilex"
 local second = require "second"
 fish.start(function ()
 	startup.start(1,7777,9999,"127.0.0.1:10105")
 
 	local inst = second.new()
 	inst:test()
-
+	local r = loadfilex("./examples/config")
+	util.dump_table(r)
 	dump_class_inst("second")
 	inst = nil
 	collectgarbage "collect"
 	dump_class_inst("second")
 
+	local token = util.encode_token({hello = "world"},"key",3600)
+	print(token)
+	util.dump_table(util.decode_token(token,"key",3600))
 	local libmongo = require "libmongo"
 	-- util.dump_table(libmongo.listdb())
 	local u3d = libmongo.new("u3d")
@@ -23,9 +27,9 @@ fish.start(function ()
 	
 	startup.create_service("login","login/login_boot")
 	local handle = startup.create_service("remote_test","remote_test")
-	startup.create_service("remote_gate","remote_gate","8888")
-	local handle_interaction = startup.create_service("remote_interaction","remote_client","remote_interaction/remote_interaction_proto","127.0.0.1","8888")
-	local handle_team = startup.create_service("remote_team","remote_client","remote_team/remote_team_proto","127.0.0.1","8888")
+	startup.create_service("remote_gate","remote_gate","key","8888")
+	local handle_interaction = startup.create_service("remote_interaction","remote_client","remote_interaction/remote_interaction_proto","key","127.0.0.1","8888")
+	local handle_team = startup.create_service("remote_team","remote_client","remote_team/remote_team_proto","key","127.0.0.1","8888")
 
 	remote.send_gate_name(handle_interaction,"remote_test","ping",{a = 1,b = 2})
 	remote.send_gate_handle(handle_team,handle,"req",{handle = handle,a = 3,b = 4})

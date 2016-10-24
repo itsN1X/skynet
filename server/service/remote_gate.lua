@@ -3,7 +3,7 @@ local util = require "util"
 local gate = require "gate"
 
 
-local _port = ...
+local _key,_port = ...
 local _fd_mgr = {}
 
 local function start()
@@ -23,7 +23,14 @@ local command = {}
 
 function command.auth(fd,args)
 	local fd_info = _fd_mgr[fd]
-	fish.raw_send(fd_info.client,"client",fish.pack({method = "auth_success",content = {"i am gate"}}))
+	local args = util.decode_token(args,_key,3600)
+	if args == nil or args.hello == nil or args.hello ~= "gate" then
+		fish.error(string.format("remote client auth failed!"))
+		gate.closeclient(fd)
+	else
+		local token = util.encode_token({hello = "client"},_key,3600)
+		fish.raw_send(fd_info.client,"client",fish.pack({method = "auth_success",content = {token}}))
+	end
 end
 
 function command.forward_service_name(fd,service,method,args)
