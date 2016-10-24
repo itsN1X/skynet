@@ -6,7 +6,7 @@ local mongodb_collection = require "mongodb.mongodb_collection"
 local loadfilex = require "loadfilex"
 local second = require "second"
 fish.start(function ()
-	startup.start(1,7777,9999,"127.0.0.1:10105")
+	startup.start(1,7777,9999,"127.0.0.1:10105","../game/game/csv")
 
 	local inst = second.new()
 	inst:test()

@@ -57,7 +57,7 @@ CSERVICE = snlua logger gate harbor client remoteclient
 LUA_CLIB = skynet socketdriver bson mongo md5 netpack \
   clientsocket memory profile multicast \
   cluster crypt sharedata stm sproto lpeg \
-  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time
+  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time config
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -164,6 +164,8 @@ $(LUA_CLIB_PATH)/timerheap.so : server/clib/lua-timerheap.c server/clib/minheap.
 $(LUA_CLIB_PATH)/time.so : server/clib/lua-time.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
 
+$(LUA_CLIB_PATH)/config.so : server/clib/lua-config.c
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so

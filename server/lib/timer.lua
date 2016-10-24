@@ -23,7 +23,7 @@ function meta:update(now)
 	end
 end
 
-function _M.new(id)
+function _M.create(id)
 	local obj = setmetatable({},{__index = self})
 	obj.inst = core.create()
 	obj.funclist = {}

@@ -1,12 +1,13 @@
 local fish = require "fish"
 local skynet = require "skynet"
+local csv = require "config.csvloader"
 
 local _server_id = nil
 local _service_mgr = {}
 
 local _M = {}
 
-function _M.start(id,console,http,mongodb)
+function _M.start(id,console,http,mongodb,csvpath)
 	fish.register(".startup")
 
 	_server_id = id
@@ -21,6 +22,9 @@ function _M.start(id,console,http,mongodb)
 	end
 	if mongodb ~= nil then
 		_M.create_service("mongodb","mongodb/mongodb_boot","127.0.0.1","10105")
+	end
+	if csvpath ~= nil then
+		csv.load(csvpath)
 	end
 end
 
