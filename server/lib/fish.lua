@@ -94,7 +94,11 @@ function system.reload(source,list)
 			end})
 		end
 	end
+
 	fish.ret("ok")
+	if _reload_func ~= nil then
+		_reload_func()
+	end
 end
 
 function fish.require(file)
@@ -235,13 +239,6 @@ function fish.start(start_func,stop_func,init_func)
 		data_collector.func_over("service start")
 	end)
 	_alive = true
-
-	skynet.timeout(100,function ()
-		data_collector.collect_message("test1",2313545)
-		data_collector.collect_message("test1",23545)
-		data_collector.collect_message("test2",235345)
-		data_collector.report(fish.error)
-	end)
 end
 
 
