@@ -227,6 +227,16 @@ _time_to_monsec(lua_State *L) {
 	return 1;
 }
 
+int
+_fetch_usec_time(lua_State *L)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	double usec = (double)tv.tv_usec;
+	double t = (double)(tv.tv_sec) + usec / 1000000.0;
+	lua_pushnumber(L,t);
+	return 1;
+}
 
 int luaopen_time_core(lua_State *L)
 {
@@ -246,6 +256,7 @@ int luaopen_time_core(lua_State *L)
 			{ "time_to_date", _time_to_date },
 			{ "time_to_daysec", _time_to_daysec },
 			{ "time_to_monsec", _time_to_monsec },
+			{ "fetch_usec_time", _fetch_usec_time },
 			{ NULL, NULL } };
 
 	lua_createtable(L, 0, (sizeof(l)) / sizeof(luaL_Reg) - 1);

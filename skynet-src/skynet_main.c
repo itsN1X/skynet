@@ -118,17 +118,20 @@ main(int argc, char *argv[]) {
 	struct lua_State *L = luaL_newstate();
 	luaL_openlibs(L);	// link lua lib
 
-	int err = luaL_loadstring(L, load_config);
-	assert(err == LUA_OK);
-	lua_pushstring(L, config_file);
-
-	err = lua_pcall(L, 1, 1, 0);
-	if (err) {
-		fprintf(stderr,"%s\n",lua_tostring(L,-1));
-		lua_close(L);
-		return 1;
+	int i = 1;
+	for(;i < argc;i++) {
+		int err = luaL_loadstring(L, load_config);
+		assert(err == LUA_OK);
+		lua_pushstring(L, argv[i]);
+		
+		err = lua_pcall(L, 1, 1, 0);
+		if (err) {
+			fprintf(stderr,"%s\n",lua_tostring(L,-1));
+			lua_close(L);
+			return 1;
+		} 
+		_init_env(L);
 	}
-	_init_env(L);
 
 	config.thread =  optint("thread",8);
 	config.module_path = optstring("cpath","./cservice/?.so");

@@ -34,7 +34,6 @@ function config:init(datas)
             core.add(obj,_csvtbl[name],name,core_new(data))
         end
     end)
-    assert(false,_obj)
 end
 
 

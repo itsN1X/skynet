@@ -93,6 +93,70 @@ ladd(lua_State *L) {
 	return 0;
 }
 
+#define SHAREDATA_INDEX 	1
+#define ARRAYELEMENT_INDEX 	2
+#define GCFUNC_INDEX 		3
+
+static int
+releaseobj(lua_State *L) {
+	luaL_checktype(L, 1, LUA_TTABLE);
+	lua_rawgeti(L,1,ARRAYELEMENT_INDEX);
+	struct config_data* data = lua_touserdata(L,-1);
+	if (__sync_sub_and_fetch(&data->ref, 1) == 0) {
+		lua_rawgeti(L,1,GCFUNC_INDEX);
+		lua_pushlightuserdata(L,data->ptr);
+		if (lua_pcall(L,1,0,0) != LUA_OK) {
+			luaL_error(L,lua_tostring(L,-1));
+		}
+		free(data);
+	}
+	return 0;
+}
+
+
+static int
+lsearch(lua_State *L) {
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+	luaL_checktype(L, 2, LUA_TNUMBER);
+
+	struct config_array *ar = lua_touserdata(L,1);
+	rwlock_rlock(&ar->lock);
+
+	int index = lua_tointeger(L,2);
+
+	struct config *conf = &ar->cfgs[index-1];
+
+	if (conf->value == NULL) {
+		rwlock_runlock(&ar->lock);
+		luaL_error(L,"lsearch error:%d\n",index);
+		return 0;
+	}
+
+	struct config_data* data = conf->value;
+
+	__sync_add_and_fetch(&data->ref, 1);
+
+	lua_createtable(L, 3, 0);
+	//sharedata ptr
+	lua_pushlightuserdata(L,data->ptr);
+	lua_rawseti(L,-2,SHAREDATA_INDEX);
+	//array element
+	lua_pushlightuserdata(L,data);
+	lua_rawseti(L,-2,ARRAYELEMENT_INDEX);
+	//gc func
+	lua_pushvalue(L,3);
+	lua_rawseti(L,-2,GCFUNC_INDEX);
+
+	if (luaL_newmetatable(L, "meta")) {
+		lua_pushcfunction(L,releaseobj);
+		lua_setfield(L, -2, "__gc");
+	}
+	lua_setmetatable(L, -2);
+
+	rwlock_runlock(&ar->lock);
+	return 1;
+}
+
 static int
 linfo(lua_State *L) {
 	// luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
@@ -160,75 +224,12 @@ _load(lua_State *L) {
 
 static int
 _init(lua_State* L) {
-
+	return 0;
 }
 
 
 
-#define SHAREDATA_INDEX 	1
-#define ARRAYELEMENT_INDEX 	2
-#define GCFUNC_INDEX 		3
 
-static int
-releaseobj(lua_State *L) {
-	// luaL_checktype(L, 1, LUA_TTABLE);
-	// lua_rawgeti(L,1,ARRAYELEMENT_INDEX);
-	// struct data *d = lua_touserdata(L,-1);
-	// if (__sync_sub_and_fetch(&d->ref, 1) == 0) {
-	// 	lua_rawgeti(L,1,GCFUNC_INDEX);
-	// 	lua_pushlightuserdata(L,d->ptr);
-	// 	if (lua_pcall(L,1,0,0) != LUA_OK) {
-	// 		luaL_error(L,lua_tostring(L,-1));
-	// 	}
-	// 	free(d);
-	// }
-	// return 0;
-}
-
-static int
-lsearch(lua_State *L) {
-	// luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-	// luaL_checktype(L, 2, LUA_TNUMBER);
-
-	// struct array *ar = lua_touserdata(L,1);
-	// rwlock_rlock(&ar->lock);
-
-	// int index = lua_tointeger(L,2);
-
-	// // assert(index >= 1 && index <= ar->size);
-	// struct element *elt = &ar->elts[index-1];
-
-	// // assert(elt != NULL);
-	// if (elt->value == NULL) {
-	// 	rwlock_runlock(&ar->lock);
-	// 	luaL_error(L,"lsearch error:%d\n",index);
-	// 	return 0;
-	// }
-
-	// struct data *d = elt->value;
-
-	// __sync_add_and_fetch(&d->ref, 1);
-
-	// lua_createtable(L, 3, 0);
-	// //sharedata ptr
-	// lua_pushlightuserdata(L,d->ptr);
-	// lua_rawseti(L,-2,SHAREDATA_INDEX);
-	// //array element
-	// lua_pushlightuserdata(L,d);
-	// lua_rawseti(L,-2,ARRAYELEMENT_INDEX);
-	// //gc func
-	// lua_pushvalue(L,3);
-	// lua_rawseti(L,-2,GCFUNC_INDEX);
-
-	// if (luaL_newmetatable(L, "meta")) {
-	// 	lua_pushcfunction(L,releaseobj);
-	// 	lua_setfield(L, -2, "__gc");
-	// }
-	// lua_setmetatable(L, -2);
-
-	// rwlock_runlock(&ar->lock);
-	// return 1;
-}
 
 static int
 lupdate(lua_State *L) {

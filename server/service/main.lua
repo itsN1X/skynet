@@ -5,9 +5,20 @@ local startup = require "server_startup"
 local mongodb_collection = require "mongodb.mongodb_collection"
 local loadfilex = require "loadfilex"
 local second = require "second"
-fish.start(function ()
-	startup.start(1,7777,9999,"127.0.0.1:10105","../game/game/csv")
+local config = require "config.config_helper"
+local debughelper = require "debughelper"
 
+fish.start(function ()
+	local time_recorder = debughelper.create_timerecorder()
+	_G["time_recorder"] = time_recorder
+	time_recorder:begin("startup.start")
+	startup.start(1,7777,9999,"127.0.0.1:10105","./server/csv")
+	time_recorder:over("startup.start")
+
+	time_recorder:begin("config:find")
+	util.dump_table(config:find("Item",1))
+	time_recorder:over("config:find")
+	time_recorder:report()
 	local inst = second.new()
 	inst:test()
 	local r = loadfilex("./examples/config")
