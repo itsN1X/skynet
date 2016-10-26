@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
-
+#include <sys/time.h>
 static inline int 
 g_localtime(const time_t time, struct tm *t, int timezone) {
 	if (t == NULL)
@@ -53,8 +53,9 @@ g_localtimex(time_t sec,struct tm* tm,int timezone) {
     tm->tm_mon = (-m/10)*12 + m + 2;
     tm->tm_year = b*100 + d  - 6700 + (m/10);
 
-    return tm;
+    return 0;
 }
+
 
 #ifdef LOCALTIME_R 
 #define LOCALTIME(ti,tm) (g_localtime(ti,tm,8))
