@@ -158,74 +158,28 @@ lsearch(lua_State *L) {
 }
 
 static int
-linfo(lua_State *L) {
-	// luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-	// struct array *ar = lua_touserdata(L,1);
-	// int init = __sync_val_compare_and_swap(&ar->init, 0, 1);
-	// if (init == 0) {
-	// 	luaL_error(L,"please init config first!\n");
-	// 	return 0;
-	// }
-
-	// lua_newtable(L);
-	// int i;
-	// for(i=0;i<ar->size;i++) {
-	// 	lua_pushlstring(L,ar->elts[i].key,ar->elts[i].size);
-	// 	lua_rawseti(L, -2, i+1);
-	// }
-
-	return 1;
-}
-
-
-static int
-lnew(lua_State *L) {
-	// luaL_checktype(L,1,LUA_TNUMBER);
-
-	// int n = lua_tointeger(L, 1);
-
-	// struct array *ar = malloc(sizeof(*ar));
-	// memset(ar,0,sizeof(*ar));
-
-	// ar->size = n;
-
-	// ar->elts = malloc(sizeof(struct element) * ar->size);
-	// memset(ar->elts,0,sizeof(struct element) * ar->size);
-
-	// lua_pushlightuserdata(L,ar);
-	return 1;
-}
-
-static int
-ldelete(lua_State *L) {
-	return 0;
-}
-
-static int
 _load(lua_State *L) {
-	// struct config_array *ar = malloc(sizeof(*ar));
-	// ar->offset = 0;
-	// ar->size = 64;
-	// ar->cfgs = malloc(sizeof(struct config) * ar->size);
-	// memset(ar->cfgs,0,sizeof(struct config) * ar->size);
+	// assert(CONFIG_ARRAY == NULL);
+	// struct config_array* ar = CONFIG_ARRAY;
 
-	// rwlock_init(ar->lock)
-	// CONFIG_ARRAY = ar;
+	// rwlock_wlock(&ar->lock);
 
-	// luaL_checktype(L, 1, LUA_TFUNCTION);
-	// if (lua_pcall(L,0,0,0) != LUA_OK) {
-	// 	luaL_error(L,lua_tostring(L,-1));
+	// lua_createtable(L,128,0);
+
+	// int i = 0;
+	// for (;i < ar->size;i++) {
+	// 	if (ar->cfgs[i] == NULL)
+	// 		break;
+	// 	struct config_name* name = ar->cfgs[i].key;
+	// 	lua_pushlstring(L,name->key,name->size);
+	// 	lua_rawseti(self->L, -2, i+1);
 	// }
 
-	return 0;
+	// rwlock_wunlock(&ar->lock);
+	return 1;
 }
 
 
-
-static int
-_init(lua_State* L) {
-	return 0;
-}
 
 
 
@@ -291,8 +245,6 @@ int
 luaopen_config(lua_State *L) {
 	luaL_Reg l[] = {
 		{ "init",	linit },
-		{ "delete", ldelete },
-		{ "info",	linfo },
 		{ "add",	ladd },
 		{ "search", lsearch },
 		{ "update", lupdate },

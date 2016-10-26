@@ -100,4 +100,26 @@ function _M.decode_token(token,key,expiry)
     return token_table
 end
 
+
+function _M.request_center(req,center,func,args)
+    local param = {
+        auth = "z8k3afuqk70wkw13",
+        func = func,
+        args = args
+    }
+
+    local token = _M.encode_token(param,"y@dta8@AgrXe4)%+jpc;S(+NCzV1S(lE",1800)
+    local status, result = req(center, "/skynet.php",{token = token}, {})
+
+    if status ~= 200 then
+        return false,string.format("request center status:%d",status)
+    end
+
+    local r = json.decode(result)
+    if r.code ~= 0 then
+        return false,string.format("request center code:%d,msg:%s",r.code,r.msg)
+    end
+    return r.data
+end
+
 return _M

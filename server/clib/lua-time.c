@@ -15,7 +15,7 @@
 #include <assert.h>
 
 static inline int 
-g_localtime(const time_t time, struct tm *t) {
+g_localtime(const time_t time, struct tm *t, int timezone) {
 	if (t == NULL)
 		return -1;
 
@@ -25,17 +25,54 @@ g_localtime(const time_t time, struct tm *t) {
 	return 0;
 }
 
+static inline int
+g_localtimex(time_t sec,struct tm* tm,int timezone) {
+	if (tm == NULL)
+		return -1;
+
+ 	static const int kHoursInDay = 24;
+    static const int kMinutesInHour = 60;
+    static const int kDaysFromUnixTime = 2472632;
+    static const int kDaysFromYear = 153;
+    static const int kMagicUnkonwnFirst = 146097;
+    static const int kMagicUnkonwnSec = 1461;
+    tm->tm_sec  =  sec % kMinutesInHour;
+    int i      = (sec/kMinutesInHour);
+    tm->tm_min  = i % kMinutesInHour; //nn
+    i /= kMinutesInHour;
+    tm->tm_hour = (i + timezone) % kHoursInDay; // hh
+    tm->tm_mday = (i + timezone) / kHoursInDay;
+    int a = tm->tm_mday + kDaysFromUnixTime;
+    int b = (a*4  + 3)/kMagicUnkonwnFirst;
+    int c = (-b*kMagicUnkonwnFirst)/4 + a;
+    int d =((c*4 + 3) / kMagicUnkonwnSec);
+    int e = -d * kMagicUnkonwnSec;
+    e = e/4 + c;
+    int m = (5*e + 2)/kDaysFromYear;
+    tm->tm_mday = -(kDaysFromYear * m + 2)/5 + e + 1;
+    tm->tm_mon = (-m/10)*12 + m + 2;
+    tm->tm_year = b*100 + d  - 6700 + (m/10);
+
+    return tm;
+}
+
+#ifdef LOCALTIME_R 
+#define LOCALTIME(ti,tm) (g_localtime(ti,tm,8))
+#else
+#define LOCALTIME(ti,tm) (g_localtimex(ti,tm,8))
+#endif
+
 int 
 _same_day(lua_State *L) {
 	time_t t1 = luaL_checkinteger(L, 1);
 	time_t t2 = luaL_checkinteger(L, 2);
 
 	struct tm p1;
-	if (g_localtime(t1, &p1) < 0)
+	if (LOCALTIME(t1, &p1) < 0)
 		return 0;
 
 	struct tm p2;
-	if (g_localtime(t2, &p2) < 0)
+	if (LOCALTIME(t2, &p2) < 0)
 		return 0;
 
 	int ret;
@@ -54,11 +91,11 @@ _same_mon(lua_State *L) {
 	time_t t2 = luaL_checkinteger(L, 2);
 
 	struct tm p1;
-	if (g_localtime(t1, &p1) < 0)
+	if (LOCALTIME(t1, &p1) < 0)
 		return 0;
 
 	struct tm p2;
-	if (g_localtime(t2, &p2) < 0)
+	if (LOCALTIME(t2, &p2) < 0)
 		return 0;
 
 	int ret;
@@ -75,7 +112,7 @@ int
 _next_midnight(lua_State *L) {
 	time_t cur_time = luaL_checkinteger(L, 1);
 	struct tm p;
-	if (g_localtime(cur_time, &p) < 0)
+	if (LOCALTIME(cur_time, &p) < 0)
 		return 0;
 
 	p.tm_sec = 0;
@@ -94,7 +131,7 @@ int
 _time_to_year(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_year);
@@ -105,7 +142,7 @@ int
 _time_to_mon(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_mon);
@@ -116,7 +153,7 @@ int
 _time_to_yday(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_yday);
@@ -127,7 +164,7 @@ int
 _time_to_mday(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_mday);
@@ -138,7 +175,7 @@ int
 _time_to_wday(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_wday);
@@ -149,7 +186,7 @@ int
 _time_to_hour(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_hour);
@@ -160,7 +197,7 @@ int
 _time_to_min(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_min);
@@ -171,7 +208,7 @@ int
 _time_to_sec(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_pushinteger(L, tm_time.tm_sec);
@@ -182,7 +219,7 @@ int
 _time_to_date(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	lua_newtable(L);
@@ -207,7 +244,7 @@ int
 _time_to_daysec(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	int daysec = tm_time.tm_hour * 60 * 60 + tm_time.tm_min * 60 + tm_time.tm_sec;
@@ -219,7 +256,7 @@ int
 _time_to_monsec(lua_State *L) {
 	time_t tick = luaL_checkinteger(L, 1);
 	struct tm tm_time;
-	if (g_localtime(tick, &tm_time) < 0)
+	if (LOCALTIME(tick, &tm_time) < 0)
 		return 0;
 
 	int sec = (tm_time.tm_mday - 1) * 24 * 3600 + tm_time.tm_hour * 60 * 60 + tm_time.tm_min * 60 + tm_time.tm_sec;
