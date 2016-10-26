@@ -1,7 +1,7 @@
 local fish = require "fish"
 local util = require "util"
 local gate = require "gate"
-
+local messagehelper = require "messagehelper"
 
 local _key,_port = ...
 local _fd_mgr = {}
@@ -48,6 +48,7 @@ fish.register_message("message",function (surce,fd,msg,sz)
 	local args = fish.unpack(msg,sz)
 	local func = command[args.message]
 	func(fd,table.unpack(args.args))
+	messagehelper.free_buffer(msg,sz)
 end)
 
 fish.register_message("connect",function (surce,fd,addr)

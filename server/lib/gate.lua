@@ -3,13 +3,12 @@ local fish = require "fish"
 local netpack = require "netpack"
 local socketdriver = require "socketdriver"
 
-local gate = {}
+local gate = setmetatable({}, { __gc = function() netpack.clear(queue) end })
 
 local socket	-- listen socket
 local queue		-- message queue
 local maxclient	-- max client
 local client_number = 0
-local CMD = setmetatable({}, { __gc = function() netpack.clear(queue) end })
 local nodelay = false
 
 local connection = {}

@@ -419,7 +419,7 @@ static struct luaL_Reg streamLib[] = {
   	{NULL, NULL}
 };
 
-int luaopen_pack(lua_State *L) {
+int luaopen_messagehelper(lua_State *L) {
 	luaL_checkversion(L);
 	lua_createtable(L, 0, (sizeof(streamLib)) / sizeof(luaL_Reg) - 1);
 	luaL_setfuncs(L, streamLib, 0);
