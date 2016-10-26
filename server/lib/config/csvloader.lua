@@ -3,6 +3,7 @@ local util = require "util"
 local skynet = require "skynet"
 local config = require "config.config_helper"
 local csv2table = require "config.csv2table"
+local csv2tablex = require "config.csv2tablex"
 local csv_maker = require "config.csvmaker"
 
 

@@ -7,14 +7,22 @@ local loadfilex = require "loadfilex"
 local second = require "second"
 local config = require "config.config_helper"
 local debughelper = require "debughelper"
-
+local csv2tablex = require "config.csv2tablex"
 fish.start(function ()
 	local time_recorder = debughelper.create_timerecorder()
 	_G["time_recorder"] = time_recorder
+	
+	
+	
 	time_recorder:begin("startup.start")
 	startup.start(1,7777,9999,"127.0.0.1:10105","./server/csv")
 	time_recorder:over("startup.start")
 
+	time_recorder:begin("csvparser")
+	local parser = csv2tablex.create()
+	local r = parser:parse("./server/csv/Item.csv")
+	time_recorder:over("csvparser")
+	
 	time_recorder:begin("config:find")
 	util.dump_table(config:find("Item",1))
 	time_recorder:over("config:find")
