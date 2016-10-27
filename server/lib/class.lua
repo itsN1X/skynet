@@ -7,11 +7,19 @@ local _class_instance = {}
 function class(name,super)
 	local class_type = {}
 	class_type.super = super
-	class_type.clilds = {}
+	class_type.children = {}
 	class_type.name = name
-	class_type.super_method = {}
+	class_type.supermethod = {}
 	if super ~= nil then
-		table.insert(super.clilds,name)
+		local is_child = false
+		for _,namex in pairs(super.children) do
+			if namex == name then
+				is_child = true
+			end
+		end
+		if not is_child then
+			table.insert(super.children,name)
+		end
 	end
 
 	--构造函数
@@ -31,6 +39,7 @@ function class(name,super)
 	--类的虚表
 	local vtbl={}
 	_class[class_type]=vtbl
+	class_type.vtbl = vtbl
 
 	--加载文件时给虚表赋值
 	setmetatable(class_type,{__newindex=
@@ -48,36 +57,54 @@ function class(name,super)
 				local ret=_class[super][k]
 				vtbl[k]=ret
 				--同时记录子类有哪些函数是父类的
-				table.insert(class_type.super_method,k)
+				table.insert(class_type.supermethod,k)
 				return ret
 			end
 		})
 	end
 
+
+
 	local oclass_type = _class_map[name]
 	--热更新?
 	if oclass_type ~= nil then
+
+		local function remove_clildren_supermethod(parent)
+			for _,name in pairs(parent.children) do
+				local child_class = _class_map[name]
+				local child_vtbl = _class[child_class]
+				for _,method in pairs(child_class.supermethod) do
+					child_vtbl[method] = nil
+				end
+				child_class.supermethod = {}
+				if #child_class.children ~= 0 then
+					remove_clild_supermethod(child_class)
+				end
+			end
+		end
+
 		--把所有子类的super和vtbl的super修改成新类
-		for _,child_name in pairs(oclass_type.clilds) do
-			table.insert(class_type.clilds,child_name)
-			local child_class = _class_map[child_name]
+		for _,name in pairs(oclass_type.children) do
+			table.insert(class_type.children,name)
+			local child_class = _class_map[name]
 			child_class.super = class_type
 
 			local child_vtbl = _class[child_class]
-			for _,method in pairs(child_class.super_method) do
+			for _,method in pairs(child_class.supermethod) do
 				child_vtbl[method] = nil
 			end
-			child_class.super_method = {}
+			child_class.supermethod = {}
 
 			child_vtbl.super = _class[class_type]
 			setmetatable(child_vtbl,{__index=
 				function(t,k)
 					local ret=_class[class_type][k]
 					child_vtbl[k]=ret
-					table.insert(child_class.super_method,k)
+					table.insert(child_class.supermethod,k)
 					return ret
 				end
 			})
+			remove_clildren_supermethod(child_class)
 		end
 
 		--把以此类实例化的对像的meta全设成新的class的vtbl
