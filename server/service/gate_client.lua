@@ -1,6 +1,7 @@
 local fish = require "fish"
 local gate = require "gate"
-
+local util = require "util"
+local messagehelper = require "messagehelper"
 
 local login,port,maxclient = ...
 local _login
@@ -21,6 +22,9 @@ local _agent_forward = {}
 
 fish.register_message("message",function (source,fd,msg,sz)
 	local fd_info = _fd_mgr[fd]
+	local success,message_index,cur_index,message_id = messagehelper.parse_pack(msg,sz,fd_info.index,fd_info.key)
+
+	local fd_info = _fd_mgr[fd]
 	local agent = _agent_forward[fd]
 	if agent == nil then
 		fish.raw_send(_login,"gate",fd,msg,sz)
@@ -33,7 +37,7 @@ fish.register_message("connect",function (source,fd,addr)
 	fish.error("connect",fd,addr)
 	gate.openclient(fd)
 	fish.send(_login,"enter",{fd = fd,addr = addr})
-	_fd_mgr[fd] = {addr = addr,counter = 0,key = util.rc4_box("legend")}
+	_fd_mgr[fd] = {addr = addr,index = 0,key = messagehelper.rc4_box("legend")}
 end)
 
 fish.register_message("disconnect",function (source,fd)

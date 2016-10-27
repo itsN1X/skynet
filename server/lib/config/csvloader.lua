@@ -56,9 +56,9 @@ local _M = {}
 --配置做预处理
 function _M.load(dir)
     local csvs = {}
-    time_recorder:begin("util.find_dir_files")
+
     util.find_dir_files(csvs,dir, "csv",true,false)
-    time_recorder:over("util.find_dir_files")
+
     local csv_tables = {}
     local csv_header = {}
 
@@ -66,7 +66,6 @@ function _M.load(dir)
     local dont_load = {
     }
 
-    time_recorder:begin("csv2table.load")
     for i in pairs(csvs) do
         local _,file_name = string.match(csvs[i],"(.*)/(.*).csv")
         if dont_load[file_name] == nil then
@@ -74,8 +73,7 @@ function _M.load(dir)
             csv_tables[file_name] = make_csv(data,header)
         end
     end
-    time_recorder:over("csv2table.load")
-    time_recorder:begin("make_csv")
+
     
     for name,func in pairs(csv_maker) do
         local result = table.pack(pcall(func,csv_tables[name]))
@@ -85,11 +83,8 @@ function _M.load(dir)
             csv_tables[data[1]] = data[2]
         end
     end
-    time_recorder:over("make_csv")
-
-    time_recorder:begin("config:init")
+ 
     config:init(csv_tables)
-    time_recorder:over("config:init")
 end
 
 function _M.reload(dir,file)

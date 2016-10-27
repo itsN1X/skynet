@@ -1,7 +1,9 @@
 require "lfs"
 local core = require "util.core"
 local json = require "cjson"
-local _M = {}
+
+
+local _M = setmetatable({},{__index = core})
 
 local function get_type_first_print( t )
     local str = type(t)

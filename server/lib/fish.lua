@@ -315,7 +315,8 @@ skynet.dispatch("lua", function (_, address, method, ...)
 end)
 
 fish.dispatch("gate",function (_, address, id, msg, sz)
-	fish.dispatch_message(id,msg,sz)
+	local message_index,message_id,body = messagehelper.read_pack(msg,sz)
+	fish.dispatch_message(id,message_id,body)
 end)
 
 skynet.dispatch("fish", function (_, address, cmd, ...)

@@ -23,11 +23,10 @@ function _M.start(id,console,http,mongodb,csvpath)
 	if mongodb ~= nil then
 		_M.create_service("mongodb","mongodb/mongodb_boot","127.0.0.1","10105")
 	end
-	time_recorder:begin("csv.load(csvpath)")
+
 	if csvpath ~= nil then
 		csv.load(csvpath)
 	end
-	time_recorder:over("csv.load(csvpath)")
 end
 
 function _M.create_service(name,file,...)
