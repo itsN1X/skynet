@@ -193,6 +193,10 @@ function fish.time()
 	return math.modf(skynet.time())
 end
 
+function fish.timestamp()
+	return math.modf(skynet.time() * 1000)
+end
+
 function fish.abort(text)
 	if text ~= nil then
 		skynet.call(".logger","text",text)
@@ -257,7 +261,7 @@ function fish.send_agent(agent,id,cmd,args,fallback)
 	core_send(agent,"agent",id,cmd,args,fallback)
 end
 
-function fish.make_pack(cmd,args)
+function fish.make_message(cmd,args)
 	local reponse_info = _reponse[cmd]
 	if reponse_info == nil then
 		error(string.format("no such client cmd:%s",cmd))
@@ -266,18 +270,18 @@ function fish.make_pack(cmd,args)
 	if reponse_info.proto ~= nil then
 		pack = protobuf.encode(reponse_info.proto,args)
 	end
-	local stream,sz = messagehelper.make_server_pack(reponse_info.id,pack)
+	local stream,sz = messagehelper.make_server_message(reponse_info.id,pack)
 	return stream,sz
 end
 
 function fish.send_client(client,cmd,args)
-	local stream,sz = fish.make_pack(cmd,args)
+	local stream,sz = fish.make_message(cmd,args)
 	skynet.send(client,"client",stream,sz)
 	data_collector.collect_message(cmd,sz)
 end
 
 function fish.broadcast_client(clients,cmd,args)
-	local stream,sz = fish.make_pack(cmd,args)
+	local stream,sz = fish.make_message(cmd,args)
 	local str = netpack.tostring(stream,sz)
 	local cnt = 0
 	for _,client in pairs(clients) do
@@ -288,6 +292,7 @@ function fish.broadcast_client(clients,cmd,args)
 end
 
 function fish.register_message(cmd,handler,proto)
+	assert(handler ~= nil,string.format("register message:%s failed,handler is nil",tostring(cmd)))
 	local omessage_info = _route[cmd]
 	if omessage_info ~= nil then
 		skynet.error(string.format("cmd:%s has register before,now reload",cmd))
@@ -314,9 +319,22 @@ skynet.dispatch("lua", function (_, address, method, ...)
 	fish.dispatch_message(address, method, ...)
 end)
 
-fish.dispatch("gate",function (_, address, id, msg, sz)
-	local message_index,message_id,body = messagehelper.read_pack(msg,sz)
-	fish.dispatch_message(id,message_id,body)
+fish.dispatch("gate",function (_, address, fd, id, message)
+	local body = messagehelper.read_body(message)
+	local message_info = _route[id]
+	if message_info == nil then
+		error(string.format("no such message:%d",id))
+	end
+	if message_info.proto ~= nil and body ~= nil then
+		local message,err = protobuf.decode(message_info.proto,body)
+		if message == false then
+			error(string.format("error decode id:%d,proto:%s,error:%s",id,message_info.proto,err))
+		end
+		fish.dispatch_message(fd,id,message)
+	else
+		fish.dispatch_message(fd,id,body)
+	end
+	messagehelper.free_buffer(msg,sz)
 end)
 
 skynet.dispatch("fish", function (_, address, cmd, ...)

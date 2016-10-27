@@ -1,21 +1,15 @@
 local fish = require "fish"
 local serv = fish.require "login.login_serv"
 
+fish.register_message("start",	serv.start)
 fish.register_message("enter",	serv.enter)
 fish.register_message("leave",	serv.leave)
-
+fish.register_message("update",	serv.update)
 
 fish.register_message(10000,	serv.auth,			"SoulProtocol.AuthReq")
-fish.register_message(10001,	serv.CreateRole,	"SoulProtocol.AuthReq")
-fish.register_message(10002,	serv.DeleteRole,	"SoulProtocol.DeleteRoleReq")
-fish.register_message(10003,	serv.CreateName,	"SoulProtocol.CreateNameReq")
-fish.register_message(10004,	serv.EnterGame,		"SoulProtocol.EnterGameReq")
-fish.register_message(10005,	serv.HeartBeat,		"SoulProtocol.HeartBeatReq")
-fish.register_message(10006,	serv.SyncStamp,		"SoulProtocol.SyncStampReq")
-fish.register_message(10007,	serv.RecoverRole,	"SoulProtocol.DeleteRoleReq")
 
 
 fish.register_reponse("OnAuth",			40000,		"SoulProtocol.AuthMsg")
-fish.register_reponse("OnCreateName",	40003,		"SoulProtocol.AuthMsg")
+fish.register_reponse("CloseNty",			40009,		"SoulProtocol.CloseFdNty")
 
 print("reload")

@@ -1,13 +1,14 @@
 local fish = require "fish"
 local skynet = require "skynet"
 local csv = require "config.csvloader"
+local protoloader = require "protoloader"
 
 local _server_id = nil
 local _service_mgr = {}
 
 local _M = {}
 
-function _M.start(id,console,http,mongodb,csvpath)
+function _M.start(id,console,http,mongodb,csvpath,protopath)
 	fish.register(".startup")
 
 	_server_id = id
@@ -26,6 +27,10 @@ function _M.start(id,console,http,mongodb,csvpath)
 
 	if csvpath ~= nil then
 		csv.load(csvpath)
+	end
+
+	if protopath ~= nil then
+		protoloader("./server/pb")
 	end
 end
 

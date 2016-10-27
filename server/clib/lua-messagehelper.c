@@ -104,92 +104,82 @@ _rc4_box(lua_State *L) {
 	return 1;
 }
 
+struct message {
+	char* data;
+	int size;
+	int offset;
+};
+
+struct message*
+create_message(char* data,int size,const char* key,int length) {
+	struct message* msg = malloc(sizeof(*msg));
+	msg->data = data;
+	msg->size = size;
+	msg->offset = 0;
+	int i;
+	for (i = 0;i < msg->size;i++)
+		msg->data[i] = msg->data[i] ^ key[i%length];
+	return msg;
+}
+
+void
+release_message(struct message* msg) {
+	free(msg->data);
+	free(msg);
+}
+
+ushort
+read_ushort(struct message* msg) {
+	assert(msg->size - msg->offset >= 0);
+	uint8_t result[2] = {0};
+	result[0] = *(msg->data + msg->offset);
+	msg->offset++;
+	result[1] = *(msg->data + msg->offset);
+	msg->offset++;
+	return result[0] | (result[1] << 8);
+}
+
+void*
+read_left(struct message* msg,int* length) {
+	assert(msg->size - msg->offset >= 0);
+	if (msg->size == msg->offset)
+		return NULL;
+	void* result = msg->data + msg->offset;
+	*length = msg->size - msg->offset;
+	msg->offset = msg->size;
+	return result;
+}
+
 int
-_parse_pack(lua_State* L) {
+_read_head(lua_State* L) {
 	if (lua_isuserdata(L,1) == 0)
-		luaL_error(L,"_parse_pack:must be userdata");
+		luaL_error(L,"invalid userdata");
 
 	char* data = (char*)lua_touserdata(L,1);
-	int data_size = luaL_checkinteger(L, 2);
-	int cur_index = luaL_checkinteger(L,3);
+	int size = lua_tointeger(L, 2);
+	int server_index = lua_tointeger(L,3);
+	size_t length;
+	const char* key = lua_tolstring(L,4,&length);
 
-	size_t key_size;
-	const char* key = lua_tolstring(L,4,&key_size);
+	struct message* msg = create_message(data,size,key,length);
 
-	int i;
-	for (i = 0;i < data_size;i++) {
-		data[i] = data[i] ^ key[i%key_size];
-	}
+	ushort client_index = read_ushort(msg);
+	ushort id = read_ushort(msg);
 
-	int offset = 0;
-	uint8_t tmp[4] = {0};
-	tmp[0] = *(data+(offset++));
-	tmp[1] = *(data+(offset++));
-	tmp[2] = *(data+(offset++));
-	tmp[3] = *(data+(offset++));
-
-	ushort message_index = tmp[0] | (tmp[1] << 8);
-	ushort message_id = tmp[2] | (tmp[3] << 8);
-
-	if (cur_index++ != message_index) {
+	if (server_index++ != client_index) {
+		release_message(msg);
 		lua_pushboolean(L,0);
-		lua_pushinteger(L,message_index);
-		lua_pushinteger(L,cur_index&0xffff);
-		skynet_free(data);
+		lua_pushinteger(L,client_index);
+		lua_pushinteger(L,server_index&0xffff);
 		return 3;
 	}
 
 	lua_pushboolean(L,1);
-	lua_pushinteger(L,message_index);
-	lua_pushinteger(L,cur_index&0xffff);
-	lua_pushinteger(L,message_id);
-	return 4;	
-}
-
-/*
-读取包头的消息id和索引
-*/
-int
-_read_pack_head(lua_State *L) {
-	if (lua_isuserdata(L,1) == 0) {
-		luaL_error(L,"_read_pack_head:Must be userdata");
-		return 0;
-	}
-	
-	const char * ptr = (const char *)lua_touserdata(L,1);
-	int size = luaL_checkinteger(L, 2);
-
-	if (size < sizeof(short) * 2) {
-		luaL_error(L,"_read_pack_head:Header size error:%d\n",size);
-		return 0;
-	}
-
-	const char * key = NULL;
-	size_t keysize = 0;
-	if (lua_isnil(L,3) == 0) {
-		key = lua_tolstring(L, 3, &keysize);
-	}
-
-	uint8_t str[4] = {0};
-	str[0] = *ptr;
-	str[1] = *(ptr+1);
-	str[2] = *(ptr+2);
-	str[3] = *(ptr+3);
-
-	if (key != NULL) {
-		int i;
-		for(i=0;i < 4;i++) {
-			str[i] = str[i] ^ key[i % keysize];
-		}
-	}
-	
-	ushort index = str[0] | (str[1] << 8);
-	ushort id = str[2] | (str[3] << 8);
-
-	lua_pushinteger(L,index);
+	lua_pushinteger(L,client_index);
+	lua_pushinteger(L,server_index&0xffff);
 	lua_pushinteger(L,id);
-
-	return 2;
+	lua_pushlightuserdata(L,msg);
+	return 5;	
 }
 
 /*
@@ -197,94 +187,72 @@ _read_pack_head(lua_State *L) {
 同时释放从gate里来的消息
 */
 int 
-_read_pack(lua_State *L) {
-	static int HEADER_SIZE = sizeof(short) * 2; 
+_read_body(lua_State *L) {
+	if (lua_isuserdata(L,1) == 0)
+		luaL_error(L,"invalid userdata");
 
-	if (lua_isuserdata(L,1) == 0) {
-		luaL_error(L,"read pack must be userdata");
+	struct message* msg = lua_touserdata(L,1);
+
+	int length = 0;
+	char* result = read_left(msg,&length);
+	if (result == NULL) {
+		release_message(msg);
 		return 0;
 	}
 
-	char * ptr = lua_touserdata(L,1);
-	int size = lua_tointeger(L,2);
-	
-	if (size < HEADER_SIZE) {
-		skynet_free(ptr);
-		luaL_error(L,"_read_pack:Error pack size:%d\n",size);
-		return 0;
-	}
-
-	lua_pushcfunction(L,_read_pack_head);
-	lua_pushvalue(L,1);
-	lua_pushvalue(L,2);
-	if (lua_pcall(L, 2, 2, 0) != LUA_OK) {
-		skynet_free(ptr);
-		luaL_error(L,"_read_pack:%s\n",lua_tostring(L,-1));
-		return 0;
-	}
-
-	if (HEADER_SIZE == size) {
-		skynet_free(ptr);
-		return 2;
-	}
-	lua_pushlstring(L,ptr + HEADER_SIZE,size - HEADER_SIZE);
-	skynet_free(ptr);
-	return 3;
+	lua_pushlstring(L,result,length);
+	release_message(msg);
+	return 1;
 }
+
+struct header {
+	ushort len; 		//total length of pack
+	ushort id;  		//message id
+	uint8_t num;		//pack total num
+	uint8_t index;		//pack index,start from 1
+};
 
 //for server
 int
-_make_server_pack(lua_State *L) {
-	int id = luaL_checkinteger(L, 1);
-	size_t message_size = 0;
-	const char *message = NULL;
-
-	if (lua_isnoneornil(L,2) == 0) {
-		message = luaL_tolstring(L, 2, &message_size);
-	}
-
-	struct header {
-		ushort len; 		//total length of pack
-		ushort id;  		//message id
-		uint8_t num;		//pack total num
-		uint8_t index;		//pack index,start from 1
-	};
+_make_server_message(lua_State *L) {
+	int id = lua_tointeger(L, 1);
+	size_t length = 0;
+	const char *body = NULL;
+	if (lua_isnil(L,2) == 0)
+		body = luaL_tolstring(L, 2, &length);
 
 	static int MAX_SIZE = 1024 * 60 - sizeof(struct header);
 
-	
-	int pack_count = 1;
-	if (message_size > MAX_SIZE) {
-		pack_count = message_size / MAX_SIZE;
-		if (message_size % MAX_SIZE > 0) {
-			pack_count++;
-		}
+	int cnt = 1;
+	if (length > MAX_SIZE) {
+		cnt = length / MAX_SIZE;
+		if (length % MAX_SIZE > 0)
+			cnt++;
 	}
 
 	int stream_offset = 0;
-	int stream_sz = pack_count * sizeof(struct header) + message_size;
+	int stream_sz = cnt * sizeof(struct header) + length;
 	char* stream = (char*)malloc(stream_sz);
-	
 
 	int offset = 0;
 	int i=1;
-	for (;i<=pack_count;i++) {
+	for (;i<=cnt;i++) {
 		int pack_size = 0;
-		if (message_size - offset > MAX_SIZE)
+		if (length - offset > MAX_SIZE)
 			pack_size = MAX_SIZE; 
 		else
-			pack_size = message_size - offset;
+			pack_size = length - offset;
 
 		int len = sizeof(struct header) + pack_size;
 		struct header * ptr = (struct header*)(stream + stream_offset);
 
 		ptr->len = (((len - 2) & 0xff) << 8) | (((len - 2) >> 8 ) & 0xff);
 		ptr->id = id;
-		ptr->num = pack_count;
+		ptr->num = cnt;
 		ptr->index = i;
 
 		stream_offset += sizeof(struct header);
-		memcpy((void*)(ptr+1),message + offset,pack_size);
+		memcpy((void*)(ptr+1),body + offset,pack_size);
 		stream_offset += pack_size;
 
 		offset += pack_size;
@@ -292,46 +260,6 @@ _make_server_pack(lua_State *L) {
 
 	lua_pushlightuserdata(L,stream);
 	lua_pushinteger(L,stream_sz);
-	return 2;
-}
-
-//for client
-int
-_make_client_pack(lua_State *L) {
-	int id = lua_tointeger(L, 1);
-	int index = lua_tointeger(L,2);
-	size_t sz = 0;
-	const char * body = lua_tolstring(L, 3, &sz);
-
-	int len = sizeof(short) * 3 + sz;
-
-	char * pack = skynet_malloc(len);
-	char * ptr = pack;
-	ptr[0] = (len-2) >> 8;
-	ptr[1] = (char)(len-2);
-	ptr += 2;
-	memcpy(ptr,(char*)&index,2);
-	ptr += 2;
-	memcpy(ptr,(char*)&id,2);
-	ptr += 2;
-
-	if (sz != 0 ) {
-		memcpy(ptr,body,sz);
-	}
-	
-	lua_pushcfunction(L,_xor_encrypt);
-	lua_pushlightuserdata(L,pack + sizeof(short));
-	lua_pushinteger(L,len - sizeof(short));
-	lua_pushvalue(L,4);
-	if (lua_pcall(L, 3, 1, 0) != LUA_OK) {
-		size_t size = 0;
-		const char * error = lua_tolstring(L, -1, &size);
-		luaL_error(L,"_make_client_pack:xor encrypt:%s\n",error);
-		return 0;
-	}
-
-	lua_pushlightuserdata(L,pack);
-	lua_pushinteger(L,len);
 	return 2;
 }
 
@@ -377,11 +305,9 @@ _free_buffer(lua_State* L) {
 static struct luaL_Reg streamLib[] = {
 	{ "xor_encrypt", _xor_encrypt },
 	{ "rc4_box", _rc4_box },
-	{ "parse_pack", _parse_pack },
-	{ "read_pack", _read_pack },
-	{ "read_pack_head", _read_pack_head },
-	{ "make_server_pack", _make_server_pack },
-	{ "make_client_pack", _make_client_pack },
+	{ "read_head", _read_head },
+	{ "read_body", _read_body },
+	{ "make_server_message", _make_server_message },
 	{ "littleendian", _littleendian },
 	{ "bytes2integer", _bytes2integer },
 	{ "free_buffer", _free_buffer },
