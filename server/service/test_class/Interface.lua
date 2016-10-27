@@ -14,4 +14,8 @@ function _C:Virtual_Func()
 	print(_C.name,"Virtual_Func")
 end
 
+function _C:send_battle()
+
+end
+
 return _C

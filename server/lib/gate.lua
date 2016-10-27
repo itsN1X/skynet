@@ -19,10 +19,13 @@ function gate.openclient(fd)
 	end
 end
 
-function gate.closeclient(fd)
+function gate.closeclient(fd,msg,sz)
 	local c = connection[fd]
 	if c then
 		connection[fd] = false
+		if msg ~= nil and sz ~= nil then
+			socketdriver.send(fd,msg,sz)
+		end
 		socketdriver.close(fd)
 	end
 end

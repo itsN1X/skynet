@@ -252,6 +252,7 @@ _make_server_pack(lua_State *L) {
 
 	static int MAX_SIZE = 1024 * 60 - sizeof(struct header);
 
+	
 	int pack_count = 1;
 	if (message_size > MAX_SIZE) {
 		pack_count = message_size / MAX_SIZE;
@@ -259,71 +260,39 @@ _make_server_pack(lua_State *L) {
 			pack_count++;
 		}
 	}
+
+	int stream_offset = 0;
+	int stream_sz = pack_count * sizeof(struct header) + message_size;
+	char* stream = (char*)malloc(stream_sz);
 	
-	lua_createtable(L,pack_count,0);
 
 	int offset = 0;
 	int i=1;
 	for (;i<=pack_count;i++) {
 		int pack_size = 0;
-		if (message_size - offset > MAX_SIZE) {
-			pack_size = MAX_SIZE;
-		} else {
+		if (message_size - offset > MAX_SIZE)
+			pack_size = MAX_SIZE; 
+		else
 			pack_size = message_size - offset;
-		}
 
 		int len = sizeof(struct header) + pack_size;
-		struct header * ptr = (struct header *)skynet_malloc(len);
+		struct header * ptr = (struct header*)(stream + stream_offset);
 
 		ptr->len = (((len - 2) & 0xff) << 8) | (((len - 2) >> 8 ) & 0xff);
 		ptr->id = id;
 		ptr->num = pack_count;
 		ptr->index = i;
-		memcpy((void*)(ptr+1),message + offset,pack_size);
 
-		lua_createtable(L,0,2);
-		lua_pushlightuserdata(L,ptr);
-		lua_setfield(L,-2,"ptr");
-		lua_pushinteger(L,len);
-		lua_setfield(L,-2,"len");
-		lua_rawseti(L,-2,i);
+		stream_offset += sizeof(struct header);
+		memcpy((void*)(ptr+1),message + offset,pack_size);
+		stream_offset += pack_size;
 
 		offset += pack_size;
 	}
-	// int index = 1;
-	// int offset = 0;
-	// for(;;) {
-	// 	int pack_si++ze = 0;
-	// 	if gxb c(size - offset > MAX_SIZE) {
-	// 		pack0021_0size = MAX_SIZE;
-	// 	} else {
-	// 		pack_size = size - offset;
-	// 	}
 
-	// 	int len = sizeof(struct header) + pack_size;
-	// 	struct header * ptr = (struct header *)skynet_malloc(len);
-	
-	// 	ptr->len = (((len - 2) & 0xff) << 8) | (((len - 2) >> 8 ) & 0xff);
-	// 	ptr->id = id;
-	// 	ptr->num = pack_num;
-	// 	ptr->index = index;
-	// 	memcpy((void*)(ptr+1),message + offset,pack_size);
-
-	// 	lua_newtable(L);
-	// 	lua_pushlightuserdata(L,ptr);
-	// 	lua_setfield(L,-2,"ptr");
-	// 	lua_pushinteger(L,len);
-	// 	lua_setfield(L,-2,"len");
-	// 	lua_rawseti(L,-2,index);
-
-	// 	index++;
-	// 	offset += pack_size;
-
-	// 	if (size - offset <= 0) 
-	// 		break;
-	// }
-
-	return 1;
+	lua_pushlightuserdata(L,stream);
+	lua_pushinteger(L,stream_sz);
+	return 2;
 }
 
 //for client

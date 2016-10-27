@@ -2,6 +2,9 @@ local skynet = require "skynet"
 require "skynet.manager"
 local codecache = require "skynet.codecache"
 local data_collector = require "data_collector"
+local protobuf = require "protobuf"
+local netpack = require "netpack"
+local messagehelper = require "messagehelper"
 
 local fish = {
 	PTYPE_FISH = 100,
@@ -254,12 +257,34 @@ function fish.send_agent(agent,id,cmd,args,fallback)
 	core_send(agent,"agent",id,cmd,args,fallback)
 end
 
-function fish.send_client(client,cmd,args)
+function fish.make_pack(cmd,args)
+	local reponse_info = _reponse[cmd]
+	if reponse_info == nil then
+		error(string.format("no such client cmd:%s",cmd))
+	end
+	local pack
+	if reponse_info.proto ~= nil then
+		pack = protobuf.encode(reponse_info.proto,args)
+	end
+	local stream,sz = messagehelper.make_server_pack(reponse_info.id,pack)
+	return stream,sz
+end
 
+function fish.send_client(client,cmd,args)
+	local stream,sz = fish.make_pack(cmd,args)
+	skynet.send(client,"client",stream,sz)
+	data_collector.collect_message(cmd,sz)
 end
 
 function fish.broadcast_client(clients,cmd,args)
-
+	local stream,sz = fish.make_pack(cmd,args)
+	local str = netpack.tostring(stream,sz)
+	local cnt = 0
+	for _,client in pairs(clients) do
+		skynet.send(client,"client",str)
+		cnt = cnt + 1
+	end
+	data_collector.collect_message(cmd,sz * cnt)
 end
 
 function fish.register_message(cmd,handler,proto)
