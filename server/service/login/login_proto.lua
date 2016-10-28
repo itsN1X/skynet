@@ -10,6 +10,4 @@ fish.register_message(10000,	serv.auth,			"SoulProtocol.AuthReq")
 
 
 fish.register_reponse("OnAuth",			40000,		"SoulProtocol.AuthMsg")
-fish.register_reponse("CloseNty",			40009,		"SoulProtocol.CloseFdNty")
-
-print("reload")
+fish.register_reponse("CloseNty",		40009,		"SoulProtocol.CloseFdNty")

@@ -2,13 +2,13 @@ local util = require "util"
 local fish = require "fish"
 local mongodb = require "libmongo"
 local model = require "login.login_model"
-local timerheap = require "timerheap"
+local minheap = require "minheap"
 local _M = {}
 
 
 
 function _M.start(source,args)
-    model.heap_ctx = timerheap.create()
+    model.heap_ctx = minheap.create()
 	model.gate = args.gate
 	model.db = mongodb.new("u3d")
 	fish.schedule_timer(100,"update")
@@ -18,8 +18,7 @@ function _M.enter(source,args)
 	util.dump_table(args,"enter")
 	model.login_mgr[args.fd] = {addr = args.addr,client = args.client,time = fish.time(),kick = false,auth = false}
     local info = model.login_mgr[args.fd]
-    local heapid = timerheap.push(model.heap_ctx,info.time + 10)
-    model.heap_mgr[heapid] = args.fd
+    model.heap_ctx:push(args.fd,info.time + 10)
 end
 
 function _M.leave(source,args)
@@ -38,19 +37,15 @@ end
 function _M.update(source,args)
 	fish.schedule_timer(100,"update")
 	local now = fish.time()
-    while true do
-        local heapid = timerheap.pop(model.heap_ctx,now)
-        if heapid == nil then
-            break
-        end
-        local fd = model.heap_mgr[heapid]
+
+    local timeout_list = model.heap_ctx:pop(now)
+    for _,fd in pairs(timeout_list) do
         local info = model.login_mgr[fd]
         if info ~= nil then
             if not info.auth then
                 kick_fd(fd,fish.make_message("CloseNty",{id = 2}))
             end
         end
-        model.heap_mgr[heapid] = nil
     end
 end
 

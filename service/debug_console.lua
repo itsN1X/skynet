@@ -197,6 +197,10 @@ local function adjust_address(address)
 	return address
 end
 
+local function string_to_handle(str)
+	return tonumber("0x" .. string.sub(str , 2))
+end
+
 function COMMAND.list()
 	return skynet.call(".launcher", "lua", "LIST")
 end
@@ -322,6 +326,10 @@ end
 function COMMAND.reload_file(fd,...)
 	local list = {...}
 	return skynet.call(".script_manager","lua","reload",list)
+end
+
+function COMMAND.restart(fd,handle)
+	return skynet.call(".service_helper","lua","restart",string_to_handle(handle))
 end
 
 function COMMAND.agent_new()

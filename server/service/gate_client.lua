@@ -11,7 +11,7 @@ local function start()
 end
 
 local function stop(...)
-
+	gate.close()
 end
 
 fish.start(start,stop)

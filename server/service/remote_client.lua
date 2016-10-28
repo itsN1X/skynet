@@ -16,6 +16,9 @@ fish.start(function ()
 	fish.schedule_timer(100,"socket_update")
 end,function (source,...)
 	fish.error("stop",...)
+	if _id ~= nil then
+		connector.close(_id)
+	end
 end,function (source,...)
 	fish.error("init",...)
 end)

@@ -58,10 +58,11 @@ fish.register_message("restart",function (source,handle)
 	local service_info = _serivce_mgr[handle]
 	fish.stop_service(handle)
 	_serivce_mgr[handle] = nil
-	local nhandle = fish.start_service(service_info.name,service_info.file,table.unpack(service_info.start_args))
+	local nhandle = fish.newservice(service_info.name,service_info.file,table.unpack(service_info.start_args))
 	if service_info.init then
 		fish.init_service(nhandle,table.unpack(service_info.init_args))
 	end
+	fish.ret("ok")
 end)
 
 fish.register_message("stop",function (source)

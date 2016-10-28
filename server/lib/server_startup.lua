@@ -37,27 +37,28 @@ function _M.start(id,console,http,mongodb,csvpath,protopath)
 end
 
 function _M.stop()
-	local mongodb
-	for handle,info in pairs(_service_mgr) do
-		if info.name ~= "mongodb" then
-			fish.stopservice(handle)
-		else
-			mongodb = handle
+	fish.stopservice(_service_mgr["gate"].handle)
+	fish.stopservice(_service_mgr["agent_mgr"].handle)
+	for name,info in pairs(_service_mgr) do
+		if name ~= "mongodb" and name ~= "gate" and name ~= "agent_mgr" then
+			fish.error("stop",name,info.handle)
+			fish.stopservice(info.handle)
 		end
 	end
-	fish.stopservice(mongodb)
+	fish.stopservice(_service_mgr["mongodb"].handle)
 	fish.abort("stop server done")
 end
 
 function _M.create_service(name,file,...)
 	local handle = fish.newservice(name,file,...)
-	_service_mgr[handle] = {handle = handle,name = name,file = file,args = table.pack(...)}
+	_service_mgr[name] = {handle = handle,name = name,file = file,args = table.pack(...)}
 	return handle
 end
 
+
 function _M.init_all_service()
-	for handle,start_info in pairs(_service_mgr) do
-		fish.initservice(handle)
+	for name,info in pairs(_service_mgr) do
+		fish.initservice(info.handle)
 	end
 end
 
