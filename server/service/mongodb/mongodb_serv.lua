@@ -2,7 +2,7 @@ local fish = require "fish"
 local mongo = require "mongo"
 local bson = require "bson"
 local collections = require "mongodb.mongodb_collection"
-
+local util = require "util"
 
 local _M = {}
 
@@ -10,6 +10,15 @@ local client
 
 function _M.start(host,port)
 	client = mongo.client({host = host , port = port})
+	local db = client:getDB("u3d")
+	collections.foreach(function (name,info)
+		local indexes = info.index
+		if #indexes ~= 0 then
+			for _,idx in pairs(indexes) do
+				db:getCollection(name):createIndexes(idx)
+			end
+		end
+	end)
 end
 
 function _M.stop()

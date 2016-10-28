@@ -12,9 +12,9 @@ local function register_agent_collection(name)
 end
 
 
-
-register_collection("role",{{"id"},{"id","account"}})
-register_collection("test",{{"id"}})
+register_collection("role",{{"id",unique = true},{"id","account",unique = true}})
+register_collection("test1",{{"id",unique = true}})
+register_collection("test2",{})
 
 
 
@@ -51,19 +51,6 @@ end
 export.foreach_agent = function (func)
 	for name,_ in pairs(agent_collections) do
 		func(name)
-	end
-end
-
-export.createIndex = function (u3d)
-	for name,info in pairs(collect_info) do
-		for _,indexes in pairs(info.index) do
-			local indextbl = {}
-			for _,index in pairs(indexes) do
-				indextbl[index] = 1
-			end
-			util.dump_table(indextbl,"indextbl")
-			u3d[name]:createIndex(indextbl,false)
-		end
 	end
 end
 
