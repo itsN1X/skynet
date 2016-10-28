@@ -9,39 +9,6 @@
 #include "skynet_malloc.h"
 
 
-/*
-C pack:
-short:整个消息包长
-short:包索引
-short:消息id,
-string:消息包体
-
-整个消息包长:
-		前端要带此字段，不过来到后端时在socket_server.c里已经读完，来此文件
-		时已经没有此字段.
-包索引:
-		是前端对于当前登录必须自增的一个索引,重登后清0,
-		大量刷包工具都是拿到一个整包,循环往后端发。发现此字段非自增侧T掉连接.
-
-前端发来的包要用指定的key和原来的包做xor,提高前端刷包门槛,
-服务端拿到整包后用一个指定的key做xor操作得到原来包
-
-
-S pack:
-short:整个消息包长
-short:消息id,
-uint8:此包有有多少个小包,
-uint8:小包索引
-string:消息包体
-*/
-
-
-/*
-arg 1:userdata,arg 2:长度,arg 3:key
-arg 1:string,arg 2:key
-若是userdata,直接改变这个userdata的内容,
-若是string,返回一个新string
-*/
 int
 _xor_encrypt(lua_State *L) {
 	int index;
