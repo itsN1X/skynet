@@ -5,21 +5,21 @@ local service_pool = require "service_pool"
 local _agent_pool
 
 local function start(...)
-	_agent_pool = service_pool.create("agent/agent",5,20)
+	fish.register(".agent_mgr")
+	_agent_pool = service_pool.create("agent","agent/agent",5,20)
 end
 
 local function stop(...)
-
+	_agent_pool:foreach(function (agent,cnt)
+		fish.stopservice(agent)
+	end)
 end
 
 fish.start(start,stop)
 
-fish.register_message("reload",function (source,args)
-
-end)
-
 fish.register_message("restart",function (source,args)
-
+	_agent_pool:new()
+	fish.ret("ok")
 end)
 
 

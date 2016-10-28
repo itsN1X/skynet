@@ -3,6 +3,8 @@ local skynet = require "skynet"
 local csv = require "config.csvloader"
 local protoloader = require "protoloader"
 
+
+
 local _server_id = nil
 local _service_mgr = {}
 
@@ -32,6 +34,19 @@ function _M.start(id,console,http,mongodb,csvpath,protopath)
 	if protopath ~= nil then
 		protoloader("./server/pb")
 	end
+end
+
+function _M.stop()
+	local mongodb
+	for handle,info in pairs(_service_mgr) do
+		if info.name ~= "mongodb" then
+			fish.stopservice(handle)
+		else
+			mongodb = handle
+		end
+	end
+	fish.stopservice(mongodb)
+	fish.abort("stop server done")
 end
 
 function _M.create_service(name,file,...)

@@ -39,6 +39,13 @@ skynet.register_protocol {
 	pack = function(...) return ... end,
 }
 
+skynet.register_protocol {
+    name = "text",
+    id = skynet.PTYPE_TEXT,
+    unpack = skynet.tostring,
+    pack = function(...) return ... end,
+}
+
 
 local system = {}
 

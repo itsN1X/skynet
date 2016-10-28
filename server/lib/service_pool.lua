@@ -25,6 +25,14 @@ local function try_pop(self)
 	return
 end
 
+local function create_service(self)
+	if #self.args ~= 0 then
+		return fish.newservice(self.name,self.file,table.unpack(self.args))
+	else
+		return fish.newservice(self.name,self.file)
+	end
+end
+
 local function expand(self,cap)
 	if self.cap == cap then
 		return
@@ -32,7 +40,7 @@ local function expand(self,cap)
 	
 	local add = cap - self.cap
 	for i = 1,add do
-		local handle = fish.newservice("agent",self.file,table.unpack(self.args))
+		local handle = create_service(self)
 		ctx.pool[0][handle] = 0
 	end
 	self.cap = cap
@@ -63,12 +71,12 @@ end
 
 function meta:new()
 	local npool = {}
-	for i=0,ctx.cnt do
+	for i=0,self.cnt do
 		npool[i] = {}
 	end
 
-	for i=1,ctx.cap do
-		local handle = fish.newservice("agent",file,table.unpack(self.args))
+	for i=1,self.cap do
+		local handle = create_service(self)
 		npool[0][handle] = 0
 	end
 	npool.next = self.pool
@@ -104,9 +112,10 @@ function meta:dump()
 	fish.error(table.concat(logs,"\r\n"))
 end
 
-function _M.create(file,cap,cnt,...)
+function _M.create(name,file,cap,cnt,...)
 	local ctx = setmetatable({},{__index = meta})
 	ctx.file = file
+	ctx.name = name
 	ctx.cap = cap
 	ctx.cnt = cnt
 	ctx.lock = lock()
@@ -117,7 +126,7 @@ function _M.create(file,cap,cnt,...)
 		ctx.pool[i] = {}
 	end
 	for i=1,ctx.cap do
-		local handle = fish.newservice("agent",file,...)
+		local handle = create_service(ctx)
 		ctx.pool[0][handle] = 0
 	end
 	return ctx

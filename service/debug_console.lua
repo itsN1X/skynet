@@ -323,3 +323,7 @@ function COMMAND.reload_file(fd,...)
 	local list = {...}
 	return skynet.call(".script_manager","lua","reload",list)
 end
+
+function COMMAND.agent_new()
+	return skynet.call(".agent_mgr","lua","restart")
+end
