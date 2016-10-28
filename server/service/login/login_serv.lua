@@ -59,46 +59,7 @@ function _M.auth(fd,args)
         kick_fd(fd)
         error(string.format("fd:%d not enter",fd))
     end
-    util.dump_table(args,"auth")
-    local info = util.decode_token(args.token,"y@dta8@AgrXe4)%+jpc;S(+NCzV1S(lE",43200)
-    if info == nil then
-         kick_fd(fd)
-         error("error token:"..args.token)
-    end
-
-    local info = {account = args.token}
-
-    local login_info = model.login_mgr[fd]
-    login_info.auth = true
-    login_info.account = info.account
-    login_info.sdkId = info.sdk_id
-    login_info.userId = info.user_id
-    login_info.channelId = info.channel_id
-    login_info.dbInstance = dbInstance
-    login_info.dbIndex = dbIndex
-    login_info.auth = true
-    login_info.uuid = args.uuid
-    login_info.system = args.system
-    login_info.device = args.device
-    login_info.network = args.network
-    login_info.entryId = args.entryId
-
-    local rfields = {
-        id = 1,
-        level = 1,
-        nick = 1,
-        career = 1,
-        avatar = 1,
-        deleteTime = 1,
-        actorId = 1,
-        createTime = 1,
-        hiddenWing = 1,
-        exitTime = 1;
-    }
-
-    local rolelist = model.db.role:findAll({account = info.account, entryId = info.entryId, is_del = 0},rfields)
-  
-    fish.send_client(login_info.client,"OnAuth",{rolelist = login_info.rolelist})
+    model.login_mgr[fd].auth = true
 end
 
 function _M.relogin(...)
