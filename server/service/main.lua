@@ -7,6 +7,7 @@ local messagehelper = require "messagehelper"
 fish.start(function ()
 	
 	startup.start(1,7777,9999,"127.0.0.1:10105","./server/csv","./server/pb")
+	startup.create_service("agent_mgr","agent_mgr")
 	local login = startup.create_service("login","login/login_boot")
 	local gate = startup.create_service("gate_client","gate_client")
 	fish.send(login,"start",{gate = gate})
