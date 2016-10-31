@@ -42,11 +42,11 @@ function _M.dump_table(t, prefix, indent_input,print)
         local str_k = get_type_first_print(k)
         if type(v) == "table" then
 
-            print(formatting..str_k..k.." -> ")
+            print(formatting..str_k..tostring(k).." -> ")
 
             _M.dump_table(v, prefix, indent + 1,print)
         else
-            print(formatting..str_k..k.." -> ".. get_type_first_print(v)..tostring(v))
+            print(formatting..str_k..tostring(k).." -> ".. get_type_first_print(v)..tostring(v))
         end
         output_count = output_count + 1
     end

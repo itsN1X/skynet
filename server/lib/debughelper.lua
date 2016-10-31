@@ -56,4 +56,110 @@ function export.create_timerecorder()
 	return setmetatable({__ctxs = {}},{__index = time_meta})
 end
 
+local function findobj(path,where,obj,root,desc)
+	if root == nil then
+		return false
+	end
+
+	if path[root] ~= nil then
+		return false
+	end
+
+	path[root] = true
+
+	local what = type(root)
+	if what == "table" then
+		for k,v in pairs(root) do
+			if k == obj then
+				local way = string.format("%s.k(%s)",desc,tostring(k))
+				table.insert(where,way)
+				findobj(path,where,obj,k,way)
+			else
+				local way = string.format("%s.k(%s)",desc,tostring(k))
+				findobj(path,where,obj,k,way)
+			end
+
+			if v == obj then
+				local way = string.format("%s.(%s)v(%s)",desc,tostring(k),tostring(v))
+				table.insert(where,way)
+				findobj(path,where,obj,v,way)
+			else
+				local way = string.format("%s.(%s)v(%s)",desc,tostring(k),tostring(v))
+				findobj(path,where,obj,v,way)
+			end
+		end
+	elseif what == "function" then
+		local uv_index = 1  
+        while true do  
+            local name, value = debug.getupvalue(root, uv_index)  
+            if name == nil then  
+                break  
+            end 
+
+           	if value == obj then
+           		local way = string.format("%s.uv(%s)",desc,name)
+				table.insert(where,way)
+				findobj(path,where,obj,value,way)
+           	else
+           		local way = string.format("%s.uv(%s)",desc,name)
+				findobj(path,where,obj,value,way)
+           	end
+            uv_index = uv_index + 1  
+        end  
+	else
+
+	end
+end
+
+function export.findobj(obj)
+	local where = {}
+	local path = {}
+	findobj(path,where,obj,_G,"_G")
+	return where
+end
+
+local function dump(objs,root,finded)
+	if objs == nil then
+		return false
+	end
+
+	if root == nil then
+		return false
+	end
+
+	if finded[root] ~= nil then
+		return false
+	end
+
+	finded[root] = true
+	
+	local what = type(root)
+	if what == "table" then
+		objs[root] = true
+		for k,v in pairs(root) do
+			dump(objs,k,finded)
+			dump(objs,v,finded)
+		end
+	elseif what == "function" then
+		local uv_index = 1  
+        while true do  
+            local name, value = debug.getupvalue(root, uv_index)  
+            if name == nil then  
+                break  
+            end 
+           	dump(objs,value,finded)
+            uv_index = uv_index + 1  
+        end  
+	else
+
+	end
+end
+
+function export.dump()
+	local objs = setmetatable({},{__mode = "k"})
+	local finded = {}
+	dump(objs,_G,finded)
+	return objs
+end
+
 return export

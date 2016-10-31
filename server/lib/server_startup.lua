@@ -3,11 +3,8 @@ local skynet = require "skynet"
 local csv = require "config.csvloader"
 local protoloader = require "protoloader"
 
-
-
 local _server_id = nil
 local _service_mgr = {}
-
 local _M = {}
 
 function _M.start(id,console,http,mongodb,csvpath,protopath)

@@ -2,9 +2,12 @@ local fish = require "fish"
 local util = require "util"
 local startup = require "server_startup"
 local remote = require "remote"
+local debughelper = require "debughelper"
+
+
 fish.start(function ()
 	
-	startup.start(1,7777,9999,"127.0.0.1:10105","./server/csv","./server/pb")
+	startup.start(1,7777,9999,"127.0.0.1:10105")
 	startup.create_service("agent_mgr","agent_mgr")
 	local login = startup.create_service("login","login/login_boot")
 	local gate = startup.create_service("gate","gate_client")
@@ -17,6 +20,7 @@ fish.start(function ()
 
 	fish.send(login,"start",{gate = gate})
 	fish.send(gate,"listen",{login = login,port = 10100,maxclient = 10000})
+
 end,function ()
 	fish.error("stop")
 	startup.stop()
