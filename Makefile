@@ -26,6 +26,13 @@ PBC_INC := 3rd/pbc/
 $(PBC_STATICLIB) :
 	cd 3rd/pbc && $(MAKE) CC=$(CC)
 
+# leveldb
+LEVELDB_STATICLIB := 3rd/leveldb/out-static/libleveldb.a
+LEVELDB_INC := 3rd/leveldb/
+
+$(LEVELDB_STATICLIB) :
+	cd $(LEVELDB_INC) && $(MAKE) CC=$(CC)
+
 # jemalloc 
 
 JEMALLOC_STATICLIB := 3rd/jemalloc/lib/libjemalloc_pic.a
@@ -57,7 +64,7 @@ CSERVICE = snlua logger gate harbor client remoteclient
 LUA_CLIB = skynet socketdriver bson mongo md5 netpack \
   clientsocket memory profile multicast \
   cluster crypt sharedata stm sproto lpeg \
-  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time config messagehelper csvparser
+  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time config messagehelper csvparser leveldb
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -173,9 +180,12 @@ $(LUA_CLIB_PATH)/messagehelper.so : server/clib/lua-messagehelper.c
 $(LUA_CLIB_PATH)/csvparser.so : server/clib/lua-csvparser.c server/clib/csv/libcsv.c
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 	
+$(LUA_CLIB_PATH)/leveldb.so : server/clib/lua-leveldb.cc $(LEVELDB_STATICLIB)
+	$(CC) $(CXXFLAGS) $(SHARED) -Iskynet-src -I3rd/leveldb/include $^ -o $@ -lstdc++
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
+	cd server/clib/authcode && rm -f *.o
 	rm -rf $(PBC_BUILD)
 
 cleanall: clean

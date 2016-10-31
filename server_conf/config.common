@@ -4,7 +4,7 @@ logger = nil
 logpath = "."
 harbor = 0
 
-start = "main"	-- main script
+start = "test_leveldb"	-- main script
 bootstrap = "snlua bootstrap"	-- The service for bootstrap
 
 luaservice = root.."service/?.lua;"..root.."server/service/?.lua;"
