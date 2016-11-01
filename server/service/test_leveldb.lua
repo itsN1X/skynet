@@ -1,5 +1,8 @@
 local skynet = require "skynet"
-local core = require "leveldb"
+local lvldb = require "lvldb"
+local util = require "util"
 skynet.start(function ()
-	local db = core.create()
+	local db = lvldb.create()
+	local code,value = db:get("key")
+	util.dump_table(value,"value")
 end)

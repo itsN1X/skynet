@@ -6,8 +6,20 @@ extern "C" {
 #include <assert.h>
 #include "leveldb/db.h"
 #include "leveldb/options.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 using namespace leveldb;
+
+typedef int (*method_func)(lua_State* L,void* v);
+
+struct method_reg {
+	const char* name;
+	method_func func;
+	size_t offset;
+};
+
 
 static int
 _create_db(lua_State* L) {
@@ -20,10 +32,113 @@ _create_db(lua_State* L) {
 	return 1;
 }
 
+static int
+_delete_db(lua_State* L) {
+	leveldb::DB* db = (leveldb::DB*)lua_touserdata(L,1);
+	delete db;
+	return 0;
+}
+
+
+static int
+_db_put(lua_State* L) {
+	leveldb::DB* db = (leveldb::DB*)lua_touserdata(L,1);
+	size_t keysize;
+	const char* keystr = lua_tolstring(L,2,&keysize);
+	leveldb::Slice key(keystr,keysize);
+	const char* data = (const char*)lua_touserdata(L,3);
+	int size = luaL_checkinteger(L,4);
+	leveldb::Slice value(data,size);
+
+	leveldb::Status status = db->Put(leveldb::WriteOptions(),key,value);
+
+	free((void*)data);
+
+	if (status.ok()) {
+		lua_pushboolean(L,1);
+		return 1;
+	}
+	lua_pushboolean(L,0);
+	lua_pushliteral(L,"error db put");
+
+	return 2;
+}
+
+static int
+_db_get(lua_State* L) {
+	leveldb::DB* db = (leveldb::DB*)lua_touserdata(L,1);
+	size_t keysize;
+	const char* keystr = lua_tolstring(L,2,&keysize);
+	leveldb::Slice key(keystr,keysize);
+	std::string value;
+	leveldb::Status status = db->Get(leveldb::ReadOptions(), key, &value); 
+
+	if (status.ok()) {
+		lua_pushboolean(L,1);
+		lua_pushlstring(L,value.c_str(),value.length());
+		return 2;
+	}
+	lua_pushboolean(L,0);
+	lua_pushliteral(L,"error db get");
+	return 2;
+}
+
+static void
+method_add(lua_State* L,method_reg* reg) {
+	for(;l->name;l++) {
+		lua_pushstring(L,l->name);
+		lua_pushlightuserdata(L,(void*)l);
+		lua_settable(L,-3);
+	}
+}
+
+static void
+method_call() {
+
+}
+
+static void
+init_metatable(lua_State* L,const char* metaname,method_reg* setters,method_reg* getters) {
+
+}
+
+static int
+_read_options(lua_State* L) {
+	return 1;
+}
+
+
+static const method_reg wopt_getters[] = {
+		{ "sync", get_bool, offsetof(leveldb::WriteOptions, sync) },
+		{ 0, 0 }
+};
+
+static const method_reg wopt_setters[] = {
+		{ "sync", set_bool, offsetof(leveldb::WriteOptions, sync) },
+		{ 0, 0 }
+};
+ 
+static int
+_write_options(lua_State* L) {
+	leveldb::WriteOptions *wopt = (leveldb::WriteOptions*)lua_newuserdata(L, sizeof(leveldb::WriteOptions));
+	new(wopt)  leveldb::WriteOptions();
+
+	if (luaL_newmetatable(L, "metaropt")) {
+		init_metatable(L,"metaropt",wopt_setters,wopt_getters);
+
+	}
+	lua_setmetatable(L, -2);
+
+	return 1;
+}
+
 extern "C" {
 	int luaopen_leveldb(lua_State *L) {
 		luaL_Reg l[] = {
 			{ "create", _create_db },
+			{ "delete", _delete_db },
+			{ "put", _db_put },
+			{ "get", _db_get },
 			{ NULL, NULL },
 		};
 		luaL_newlib(L,l);
