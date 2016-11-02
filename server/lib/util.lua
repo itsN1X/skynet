@@ -56,6 +56,97 @@ function _M.dump_table(t, prefix, indent_input,print)
     end
 end
 
+--保存无环table，n为空格数可为2
+function _M.serialize(o, n)
+    if type(o) == "number" then
+        io.write(o)
+    elseif type(o) == "boolean" then
+        io.write((o and "true") or "false")
+    elseif type(o) == "string" then
+        io.write(string.format("%q", o))
+    elseif type(o) == "table" then
+        io.write("{\n")
+        for k,v in pairs(o) do
+                io.write(string.rep("   ", n) .. "[")
+                _M.serialize(k, n + 1)
+                io.write("] = ")
+                _M.serialize(v, n + 1)
+                io.write(",\n")
+        end
+        io.write(string.rep("   ", n - 1) .. "}")
+    else
+        io.write("cannot serialize a " .. type(o) .. "\n")
+    end
+end
+
+
+local function baseText(o)
+    if type(o) == "number" then
+        return 0, tostring(o)
+    elseif type(o) == "boolean" then
+        return 0, (o and "true") or "false"
+    elseif type(o) == "string" then
+        return 0, string.format("%q", o)
+    elseif type(o) == "function" then
+        return 0, tostring(o)
+    elseif type(o) == "userdata" then
+        return 0, tostring(o)
+    elseif type(o) == "table" then
+        return 1, tostring(o)
+    else
+        return -1, "unknow"
+    end
+end
+
+--保存有环的table
+--@param obj 保存对象
+--@param name 保存名称，不传默认table地址，简单使用时可以用变量名
+--@param record 已保存的table记录，用于同时打印多个table时可以查看相互的关系
+--[[使用例子
+local t1 = { x = 1, y = true, z = nil }
+local t2 = { y = 1 }
+t1.t = t2
+t1[t2] = t1
+
+util.text(t2)
+util.text(t1)
+local record = {}
+util.text(t2, "t2", record)
+util.text(t1, "t1", record)
+--]]
+function _M.text(obj, name, record, layer, layerMax)
+    layer = layer or 1
+    layerMax = layerMax or 10
+    record = record or {}       --初始化
+    name = name or tostring(obj)
+    local ret, str = baseText(obj)
+    if ret == 0 then            --基础类型
+        io.write(name, " = ", str, "\n")
+    elseif ret == 1 then        --table类型
+        if record[str] then         --已经存在的table，直接保存记录名称，避免死循环
+            io.write(name, " = ", record[str], "\n")
+        else
+            record[str] = name
+            io.write(name, " = {}\n")
+            for k,v in pairs(obj) do
+                local ret_sub, str_sub = baseText(k)
+                if record[str_sub] ~= nil then
+                    str_sub = record[str_sub]
+                end
+                local name_sub
+                if type(k) == "number" then
+                    name_sub = string.format("%s[%s]", name, str_sub)
+                else
+                    name_sub = string.format("%s{%s}", name, str_sub)
+                end
+                _M.text(v, name_sub, record, layer + 1, layerMax)
+            end
+        end
+    else                        --未知类型
+        io.write(name, " = unsupport:" .. type(obj) .. "\n")
+    end
+end
+
 local function get_suffix(filename)
     return filename:match(".+%.(%w+)$")
 end
