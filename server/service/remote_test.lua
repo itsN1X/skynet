@@ -13,7 +13,7 @@ fish.start(start,stop)
 
 fish.register_message("ping",function (source,client,args)
 	util.dump_table(args,"ping")
-	remote.send_client_name(client,"remote_test","pong",args)
+	remote.forward_client_name(client,"remote_test","pong",args)
 end)
 
 fish.register_message("pong",function (source,args)
@@ -22,7 +22,7 @@ end)
 
 fish.register_message("req",function (source,client,args)
 	util.dump_table(args,"req")
-	remote.send_client_handle(client,args.handle,"rsp",args)
+	remote.forward_client(client,args.handle,"rsp",args)
 end)
 
 fish.register_message("rsp",function (source,args)

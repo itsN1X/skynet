@@ -230,32 +230,6 @@ _make_server_message(lua_State *L) {
 	return 2;
 }
 
-int
-_littleendian(lua_State *L) {
-	size_t len = 0;
-	char * stream = (char *)lua_tolstring(L,1,&len);
-	uint8_t header[2] = {0};
-	header[0] = (uint8_t)stream[0];
-	header[1] = (uint8_t)stream[1];
-	short value = header[0] << 8 | header[1];
-	lua_pushinteger(L,value);
-	return 1;
-}
-
-int
-_bytes2integer(lua_State *L) {
-	size_t len = 0;
-	char * strv = (char *)lua_tolstring(L,1,&len);
-	if (len != 2 && len != 4) {
-		luaL_error(L, "to integer %d\n",len);
-		return 0;
-	}
-
-	int value = 0;
-	memcpy(&value,strv,len);
-	lua_pushinteger(L,value);
-	return 1;
-}
 
 int
 _free_buffer(lua_State* L) {
@@ -275,8 +249,6 @@ static struct luaL_Reg streamLib[] = {
 	{ "read_head", _read_head },
 	{ "read_body", _read_body },
 	{ "make_server_message", _make_server_message },
-	{ "littleendian", _littleendian },
-	{ "bytes2integer", _bytes2integer },
 	{ "free_buffer", _free_buffer },
   	{NULL, NULL}
 };

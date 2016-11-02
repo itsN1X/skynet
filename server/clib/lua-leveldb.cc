@@ -83,55 +83,6 @@ _db_get(lua_State* L) {
 	return 2;
 }
 
-static void
-method_add(lua_State* L,method_reg* reg) {
-	for(;l->name;l++) {
-		lua_pushstring(L,l->name);
-		lua_pushlightuserdata(L,(void*)l);
-		lua_settable(L,-3);
-	}
-}
-
-static void
-method_call() {
-
-}
-
-static void
-init_metatable(lua_State* L,const char* metaname,method_reg* setters,method_reg* getters) {
-
-}
-
-static int
-_read_options(lua_State* L) {
-	return 1;
-}
-
-
-static const method_reg wopt_getters[] = {
-		{ "sync", get_bool, offsetof(leveldb::WriteOptions, sync) },
-		{ 0, 0 }
-};
-
-static const method_reg wopt_setters[] = {
-		{ "sync", set_bool, offsetof(leveldb::WriteOptions, sync) },
-		{ 0, 0 }
-};
- 
-static int
-_write_options(lua_State* L) {
-	leveldb::WriteOptions *wopt = (leveldb::WriteOptions*)lua_newuserdata(L, sizeof(leveldb::WriteOptions));
-	new(wopt)  leveldb::WriteOptions();
-
-	if (luaL_newmetatable(L, "metaropt")) {
-		init_metatable(L,"metaropt",wopt_setters,wopt_getters);
-
-	}
-	lua_setmetatable(L, -2);
-
-	return 1;
-}
-
 extern "C" {
 	int luaopen_leveldb(lua_State *L) {
 		luaL_Reg l[] = {

@@ -1,8 +1,9 @@
 local fish = require "fish"
 local mongo = require "mongo"
 local bson = require "bson"
-local collections = require "mongodb.mongodb_collection"
 local util = require "util"
+require "mongodb.mongodb_collection"
+local dbutil = require "mongodb.mongodb_util"
 
 local _M = {}
 
@@ -11,7 +12,7 @@ local client
 function _M.start(host,port)
 	client = mongo.client({host = host , port = port})
 	local db = client:getDB("u3d")
-	collections.foreach(function (name,info)
+	dbutil.foreach(function (name,info)
 		local indexes = info.index
 		if #indexes ~= 0 then
 			for _,idx in pairs(indexes) do
@@ -27,7 +28,7 @@ end
 
 local function getCollection(database,collection)
 	local db = client:getDB(database)
-	if collections.exist(collection) == false then
+	if dbutil.exist(collection) == false then
 		error(string.format("collection:%s not register",collection))
 	end
 	return db:getCollection(collection)
