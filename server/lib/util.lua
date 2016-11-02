@@ -80,6 +80,36 @@ function _M.find_dir_files(r_table,path,suffix,is_path_name,recursive)
     end
 end
 
+function _M.spilt(str,delimiter)
+    if str == nil or str == "" or delimiter == nil then
+        return false,"error arg1 or arg2"
+    end
+
+    local result = {}
+    local pattern = string.format("(.-)%s",delimiter)
+    local hole = string.format("%s%s",str,delimiter)
+    for match in hole:gmatch(pattern) do
+        table.insert(result,match)
+    end
+
+    return result
+end
+
+--十进制右边数起第b位
+function _M.decimal_bit(value,b)
+    return math.modf((value % (10^b)) / (10^(b-1)))
+end
+
+--十进制右边数起第from到to位的数字
+function _M.decimal_sub(value,from,to)
+    local result = 0
+    for i=from,to do
+        local var = _M.decimal_bit(value,i)
+        result = result + var * 10^(i-from)
+    end
+    return result
+end
+
 function _M.encode_token(args,key,expiry)
     local json_string = json.encode(args)
     local stream = core.authcode(json_string,key,true,expiry)
