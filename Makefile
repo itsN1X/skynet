@@ -64,7 +64,7 @@ CSERVICE = snlua logger gate harbor client remoteclient
 LUA_CLIB = skynet socketdriver bson mongo md5 netpack \
   clientsocket memory profile multicast \
   cluster crypt sharedata stm sproto lpeg \
-  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time config messagehelper csvparser leveldb
+  mysqlaux debugchannel util connector protobuf lfs cjson timerheap time config messagehelper csvparser leveldb pathfinder
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -182,6 +182,9 @@ $(LUA_CLIB_PATH)/csvparser.so : server/clib/lua-csvparser.c server/clib/csv/libc
 	
 $(LUA_CLIB_PATH)/leveldb.so : server/clib/lua-leveldb.cc $(LEVELDB_STATICLIB)
 	$(CC) $(CXXFLAGS) $(SHARED) -Iskynet-src -I3rd/leveldb/include $^ -o $@ -lstdc++
+
+$(LUA_CLIB_PATH)/pathfinder.so : server/clib/lua-pathfinder.c server/clib/pathfinder/pathfinder.c
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
