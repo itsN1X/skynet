@@ -11,3 +11,5 @@ void finder_release(struct pathfinder_context* finder);
 void finder_raycast(struct pathfinder_context* finder, int index, int x0, int y0, int x1, int y1, int ignore, int* resultx, int* resulty, path_dump dump,void* ud);
 int finder_find(struct pathfinder_context * finder, int index, int x0, int y0, int x1, int y1, int ignore, path_callback cb, void* cb_args, path_dump dump,void* dump_args);
 int finder_movable(struct pathfinder_context * finder, int index, int x, int y,int ignore);
+void finder_mask_set(struct pathfinder_context * finder, int scene_index,int mask_index,int enable);
+void finder_mask_reset(struct pathfinder_context * finder, int scene_index);

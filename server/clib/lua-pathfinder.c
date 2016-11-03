@@ -123,21 +123,19 @@ _movable(lua_State *L) {
 
 static int 
 _mask_set(lua_State* L) {
-	// struct pathfinder *pf = (struct pathfinder *)lua_touserdata(L, 1);
-	// int map_index = (int)lua_tointeger(L,2);
-	// int mask_index = (int)lua_tointeger(L,3);
-	// int mask_enable = (int)lua_toboolean(L,4);
-	// struct map *m = &pf->map_mgr[map_index];
-	// MASK_SET(m,mask_index,mask_enable);
+	struct pathfinder_context *pf = (struct pathfinder_context *)lua_touserdata(L, 1);
+	int map_index = (int)lua_tointeger(L,2);
+	int mask_index = (int)lua_tointeger(L,3);
+	int mask_enable = (int)lua_toboolean(L,4);
+	finder_mask_set(pf,map_index,mask_index,mask_enable);
 	return 0;
 }
 
 static int
 _mask_reset(lua_State* L) {
-	// struct pathfinder *pf = (struct pathfinder *)lua_touserdata(L, 1);
-	// int map_index = (int)lua_tointeger(L,2);
-	// struct map *m = &pf->map_mgr[map_index];
-	// MASK_RESET(m);
+	struct pathfinder_context *pf = (struct pathfinder_context *)lua_touserdata(L, 1);
+	int map_index = (int)lua_tointeger(L,2);
+	finder_mask_reset(pf,map_index);
 	return 0;
 }
 
