@@ -505,14 +505,16 @@ int finder_movable(struct pathfinder_context * finder, int index, int x, int y,i
 	return movable(m, x, y, ignore);
 }
 
-void finder_mask_set(struct pathfinder_context * finder, int scene_index,int mask_index,int enable) 
+void finder_mask_set(struct pathfinder_context * finder, int map_index,int mask_index,int enable) 
 {
-	struct map_context *m = &finder->map_mgr[scene_index];
-	MASK_SET(m,mask_index,enable);
+	struct map_context *map = &finder->map_mgr[mask_index];
+	map->mask[mask_index] = enable;
 }
 
-void finder_mask_reset(struct pathfinder_context * finder, int scene_index) 
+void finder_mask_reset(struct pathfinder_context * finder, int map_index) 
 {
-	struct map_context *m = &finder->map_mgr[scene_index];
-	MASK_RESET(m);
+	struct map_context *map = &finder->map_mgr[map_index];
+	int i = 0; 
+	for (; i < MARK_MAX; i++)
+		map->mask[i] = 0;
 }
